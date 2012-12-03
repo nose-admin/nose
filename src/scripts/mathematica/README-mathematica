@@ -1,0 +1,91 @@
+CALCULATION WITH MATHEMATICA SCRIPTS IN BRIEF
+
+1) Take the particular initial-setting directory for n-mer you want to calculate
+2) Change all /init/*-init.m scripts so that it satisfies desired physical parameters
+3) execute ./obsluzny_skript_REDFIELD, ./obsluzny_skript_QME_1 or execute them in separate threads 
+   (only 2 kernels can be running at the same time). Output should appear in 'data/' directory.
+4) run ./merge to merge all computed *.dat files into calculated_data.dat file - input for nose
+5) 'cd ..'
+6) check that there are the same couplings and energies in 'test.ssf' as you put into Mathematica init scripts
+7) run 'nose nose.conf', correct 
+
+
+MORE DETAILED DESCRIPTION
+
+Structure of computation with Mathematica scripts is following. Everything necessary is in folder 'initial-setting' 
+for particular n-mer. Everything concerning Mathematica is executing from subfolder 'init'.
+There are following scripts:
+
+body of Mathematica program, QME part is separated into optical coherences, 1,2-excitonic block coherences and excitonic block
+
+  QME-OC2-script.m
+  QME-OPTICAL-script.m
+  QME-script.m
+  REDFIELD-script.m
+
+It is highly adviced to have only one version of these scripts in one place and create symlinks to every folder with 
+initial settings. 
+
+Mathematica initial conditions are stored in files
+
+  QME-OC2-script-init.m
+  QME-OPTICAL-script-init.m
+  QME-script-init.m
+  REDFIELD-script-init.m
+
+Everything is given in kelvins, inverse centimeters and femtoseconds, CapitalOmega gives RWA frequency, which is 
+substracted from the solution. Trigger SECULAR turns secular aproximation on and off, but its value in init file 
+takes no effect, since it is given after executing the init script by obsluzny script again. Initial condition 
+for QME is given as list of proper size created of particular part of the density matrix, e.g. if we have density matrix
+for a dimer:
+
+{{G,O1,O2,0},{O1*,P1,C1,OC2-1},{O2*,C1*,P2,OC2-2},{0,OC2-1*,OC2-2*,0}},
+
+block of optical coherences is given as {O1,O2} for QME, 1-exciton block as {P1,C1,C1*,P2}.
+Redfield scripts take initial condition directly in the form of the density matrix. Initial condition is given 
+in more block at the same time. 
+
+The body of Mathematica program with appropriate initial conditions is executed for each initial condition by scripts
+
+  obsluzny_skript_QME ,
+  obsluzny_skript_REDFIELD ,
+  obsluzny_skript_sQME .
+  ..
+
+They have to be prepared separately for each n-mer (since the initial conditions look differently.) 
+Sometimes they are split into two (like *QME_1 *QME_2 instead if *QME). This is because two Mathematica kernels
+can run on single machine, so one can execute two threads instead of one.
+It is also recommended to have only one copy of them (and thus create symlinks to replace them) when performing changes on them.
+
+CONVENTION FOR COMMUNICATION BETWEEN NOSE AND MATHEMATICA
+Part of the used mathematical apparatus does not have any effect on the calculated physics. E.g. the exciton basis is not 
+uniquely defined, even if it was unitary, because one can have different orderings of the eigenvectors and for each normalised 
+eigenvector, there are two possibilities differing by their sign. If Mathematica uses one convention and NOSE different one,
+problems will appear in their communication even though every choice of exciton basis is permitted. Tehrefore we fixed the
+convention in following way:
+
+1) Hamiltonian eigenvalues are ordered from the smallest one to the highest one in every Hamiltonian block.
+2) Each eigenvector's component, whose absolute value is the highest, has positive sign.
+
+There can still be ambiguity in case two components have the greatest absolute value and opposite sign, e.g.
+
+(10,-10,2)/norm
+
+can still be replaced by 
+
+(-10,10,-2)/norm
+
+and it doesn't contradict our convention. We considered occurence of such case to be unprobable so we haven't implemented
+this yet. But if one expects this to occur, he should expect possible problem here.
+
+
+TO BE IMPROVED & POSSIBLE BUGS
+* Function ToExcitonBasis finds correct ordering of the Hamiltonian eigenvalues by "Monte Carlo" method, this should be improved,
+although the function is called only once and time demand is very small compared to whole program.
+* Mathematica until recent needed non-zero couplings (they could have been chosen arbitrarily small, however), because it recognized
+particular blocks of Hamiltonian according to non-zero couplings. If couplings were zero, block mixed. This feature should have been 
+repaired by new ToExcitonBasis function, but it is still not very tested.
+
+NOSE SPECIAL FEATURES
+If gt(2) == 0 (second GridStep number in nose.conf), Uee values in datafile are ignored and identity operator is used instead.
+

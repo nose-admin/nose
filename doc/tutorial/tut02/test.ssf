@@ -1,0 +1,59 @@
+#
+# Spectroscopic structure file for a dimer
+#
+BEGIN_SSF
+#
+UNITS_ENERGY  wn
+#
+# Values for general trimer
+#
+set pi 3.1415926535897932384626
+# Set the same values as used by Mathematica here!
+set e2 10000
+set delta 100 
+set e1 [expr $e2 - $delta]
+set x2     0.0 
+set y2     2.0 
+set dx1    0.0 
+set dx2    0.0 
+set dy1    0.0
+set dy2    0.0 
+set dz1    1.0 
+set dz2    1.0 
+
+BEGIN_BLOCK 1    ;# just a sigle block with a single transition
+  TRANSITION  1   0.0 0.0 0.0   $dx1 $dy1 $dz1   1.0  $e1  1  1 
+  TRANSITION  2   $x2 $y2 0.0   $dx2 $dy2 $dz2   1.0  $e2  1  1
+  set coupl12 [dipole_dipole 1 2]
+  puts "Calculated coupling 12: $coupl12"; 
+
+# set couplings used by Mathematica on third positon here, or give mathematica couplings calculated by $coupIJ
+  COUPLING 1 2  $coupl12
+END_BLOCK
+
+#
+#
+# Definition of correlation function 1
+BEGIN_CORRF 1
+  BEGIN_MODE 1
+    MODE_TYPE             BROWNIAN
+    REORGANIZATION_ENERGY 120
+    CORRELATION_TIME      100
+  END_MODE
+END_CORRF
+
+#
+# disorder 1
+#
+BEGIN_DISORDER 1
+  TYPE GAUSSIAN
+  WIDTH 300
+END_DISORDER
+
+
+#
+END_SSF
+#
+# end of file
+#
+

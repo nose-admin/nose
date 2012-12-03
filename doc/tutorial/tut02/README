@@ -1,0 +1,18 @@
+This is the NOSE example directory
+
+If using LAM, edit the host file to specify machine name and the number of processors
+for parallel calculation. Boot the LAM by taping ('>' is the command line prompt) 
+
+> make boot 
+
+To stop LAM, type
+
+> make halt
+
+To Run the calculation type (LAM must be running)
+
+> nose dimer.conf
+
+The results will appear in the directory called 'out'
+
+

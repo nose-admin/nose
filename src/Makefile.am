@@ -1,0 +1,2 @@
+SUBDIRS = pert scripts utils
+ 

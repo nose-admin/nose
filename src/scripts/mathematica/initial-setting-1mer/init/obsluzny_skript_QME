@@ -1,0 +1,6 @@
+#!/bin/bash
+
+echo 'index 1'
+echo 'SECULAR=False; \[Rho]0={1};' | cat QME-script-init.m - QME-script.m | math -noprompt | grep '"@' | sed 's/"//g; s/,//g; s/}{/ IM /g; s/[{}]//g; s/*\^/E/g' > ../data/HOMOqme1a.dat
+echo 'SECULAR=False; \[Rho]0={1};' | cat QME-OPTICAL-script-init.m - QME-OPTICAL-script.m | math -noprompt | grep '"@' | sed 's/"//g; s/,//g; s/}{/ IM /g; s/[{}]//g; s/*\^/E/g' > ../data/HOMOqme1b.dat
+

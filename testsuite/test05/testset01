@@ -1,0 +1,2 @@
+CONF nose.conf test01.log
+RELATIVE  hydrogen_molecule.dat

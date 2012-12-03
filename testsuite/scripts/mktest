@@ -1,0 +1,390 @@
+#! /usr/bin/tclsh
+
+global __nose__testsetd__;
+global __nose__testsetf__;
+global __t_count;
+
+global result
+
+global __version__;
+
+set result 0;
+set cdir [pwd];
+
+########################################################################
+#                         AVAILABLE TESTS                              #
+########################################################################
+
+#
+# Test of absorption spectrum
+#
+proc ABS { filename } {
+	global result;
+	
+	set result 0;
+	
+	set filename1 [file join out $filename];
+	set filename2 [file join iofiles $filename1];
+	puts "Testing ABS:  $filename1 vs. $filename2";
+	
+	set f1 [open $filename1 r];
+	set f2 [open $filename2 r];
+	
+	set nr_diff 0;
+	set linecount 0;
+	while { [gets $f1 line1] > 0 } {
+	
+		if { [gets $f2 line2] > 0 } {
+			scan $line1 "%f %f" time1 abs1;
+			scan $line2 "%f %f" time2 abs2;
+			incr linecount;
+		} else {
+			error;
+		}
+		
+		set diff [compare_vals $time1 $time2 0.1 ]; 
+		if { $diff != 0 } {
+			puts "Difference in time axis: $diff at line $linecount ";
+			incr nr_diff;
+			set result 1;
+		}
+		
+		set diff [compare_vals $abs1 $abs2 0.1 ]; 
+		if { $diff != 0 } {
+			puts "Difference in value of absorption: $diff at line $linecount ";
+			incr nr_diff;
+			set result 1;
+		}
+		
+		if { $nr_diff > 10 } {
+			break;
+		}
+	
+	}
+	
+	close $f1;
+	close $f2;
+	
+	if { $result == 0 } {
+		puts "... ABS finished with success";
+	} else {
+		puts "... ABS finished with failure";
+	}
+	
+
+}
+
+#
+# Test of fluorescence spectrum
+#
+proc FLUOR { filename } {
+	global result;
+
+	set result 0;
+	
+	set filename1 [file join out $filename];
+	set filename2 [file join iofiles $filename1];
+	puts "Testing FLUOR:  $filename1 vs. $filename2";
+	
+	set f1 [open $filename1 r];
+	set f2 [open $filename2 r];
+	
+	set nr_diff 0;
+	set linecount 0;
+	while { [gets $f1 line1] > 0 } {
+	
+		if { [gets $f2 line2] > 0 } {
+			scan $line1 "%f %f" time1 abs1;
+			scan $line2 "%f %f" time2 abs2;
+			incr linecount;
+		} else {
+			error;
+		}
+		
+		#puts $linecount;
+		
+		set diff [compare_vals $time1 $time2 0.1 ]; 
+		if { $diff != 0 } {
+			puts "Difference in time axis: $diff at line $linecount ";
+			incr nr_diff;
+			set result 1;
+		}
+		
+		set diff [compare_vals $abs1 $abs2 0.1 ]; 
+		if { $diff != 0 } {
+			puts "Difference in value of fluorescence: $diff at line $linecount";
+			incr nr_diff;
+			set result 1;
+		}
+		
+		if { $nr_diff > 10 } {
+			break;
+		}
+	
+	}
+	
+	close $f1;
+	close $f2;
+	
+	if { $result == 0 } {
+		puts "... FLUOR finished with success";
+	} else {
+		puts "... FLUOR finished with failure";
+	}
+	
+
+
+}
+
+
+#
+# Test of CD spectrum
+#
+proc CD { filename } {
+	global result;
+	
+	set result 0;
+	
+	set filename1 [file join out $filename];
+	set filename2 [file join iofiles $filename1];
+	puts "Testing CD:  $filename1 vs. $filename2";
+	
+	set f1 [open $filename1 r];
+	set f2 [open $filename2 r];
+	
+	set nr_diff 0;
+	set linecount 0;
+	while { [gets $f1 line1] > 0 } {
+	
+		if { [gets $f2 line2] > 0 } {
+			scan $line1 "%f %f" time1 abs1;
+			scan $line2 "%f %f" time2 abs2;
+			incr linecount;
+		} else {
+			error;
+		}
+		
+		set diff [compare_vals $time1 $time2 0.1 ]; 
+		if { $diff != 0 } {
+			puts "Difference in time axis: $diff at line $linecount ";
+			incr nr_diff;
+			set result 1;
+		}
+		
+		set diff [compare_vals $abs1 $abs2 0.1 ]; 
+		if { $diff != 0 } {
+			puts "Difference in value of CD: $diff at line $linecount ";
+			incr nr_diff;
+			set result 1;
+		}
+		
+		if { $nr_diff > 10 } {
+			break;
+		}
+	
+	}
+	
+	close $f1;
+	close $f2;
+	
+	if { $result == 0 } {
+		puts "... CD finished with success";
+	} else {
+		puts "... CD finished with failure";
+	}
+	
+
+}
+
+#
+# Test of density matrix population
+#
+proc POPCOH { filename } {
+        global result;
+
+        set result 0;
+
+        set filename1 [file join out $filename];
+        set filename2 [file join iofiles $filename1];
+        puts "Testing ABS:  $filename1 vs. $filename2";
+
+        set f1 [open $filename1 r];
+        set f2 [open $filename2 r];
+
+        set nr_diff 0;
+        set linecount 0;
+        while { [gets $f1 line1] > 0 } {
+
+                if { [gets $f2 line2] > 0 } {
+                        scan $line1 "%f %f %f" time1 re1 im1;
+                        scan $line2 "%f %f %f" time2 re2 im2;
+                        incr linecount;
+                } else {
+                        error;
+                }
+
+                set diff [compare_vals $time1 $time2 0.1 ];
+                if { $diff != 0 } {
+                        puts "Difference in time axis: $diff at line $linecount ";
+                        incr nr_diff;
+                        set result 1;
+                }
+
+                set diff [compare_vals [expr ($re1 + 1e-15) / ($re2 + 1e-15) ] 1 0.001 ];
+                if { $diff != 0 } {
+                        puts "Difference in value of real part: $diff at line $linecount ";
+                        incr nr_diff;
+                        set result 1;
+                }
+
+                set diff [compare_vals [expr ($im1 + 1e-15) / ($im2 + 1e-15) ] 1 0.001 ];
+                if { $diff != 0 } {
+                        puts "Difference in value of imaginary part: $diff at line $linecount ";
+                        incr nr_diff;
+                        set result 1;
+                }
+
+                if { $nr_diff > 10 } {
+                        break;
+                }
+
+        }
+
+        close $f1;
+        close $f2;
+
+        if { $result == 0 } {
+                puts "... POPCOH finished with success";
+        } else {
+                puts "... POPCOH finished with failure";
+        }
+
+
+}
+
+#
+# Test of absorption spectrum
+#
+proc RELATIVE { filename } {
+        global result;
+
+        set result 0;
+
+        set filename1 [file join out $filename];
+        set filename2 [file join iofiles $filename1];
+        puts "Testing RELATIVE:  $filename1 vs. $filename2";
+
+        set f1 [open $filename1 r];
+        set f2 [open $filename2 r];
+
+        set nr_diff 0;
+        set linecount 0;
+        while { [gets $f1 line1] > 0 } {
+
+                if { [gets $f2 line2] > 0 } {
+                        scan $line1 "%f" abs1;
+                        scan $line2 "%f" abs2;
+                        incr linecount;
+                } else {
+                        error;
+                }
+
+                set diff [compare_vals [expr ($abs1 + 1e-15) / ($abs2 + 1e-15) ] 1 0.1 ];
+                if { $diff != 0 } {
+                        puts "Difference in relative value: $diff at line $linecount ";
+                        incr nr_diff;
+                        set result 1;
+                }
+
+                if { $nr_diff > 10 } {
+                        break;
+                }
+
+        }
+
+        close $f1;
+        close $f2;
+
+        if { $result == 0 } {
+                puts "... RELATIVE finished with success";
+        } else {
+                puts "... RELATIVE finished with failure";
+        }
+
+
+}
+
+
+########################################################################
+proc CONF { args } {
+
+	global __version__
+
+	if { [llength $args] >= 1 } {
+		set filename [lindex $args 0];
+	}
+
+	puts "Running nose in [pwd], file: $filename";  	
+	
+	set cl 0;
+	if { [llength $args] >= 2 } {
+		set logfile [lindex $args 1];
+		set f [open $logfile w];
+		set cl 1;
+		puts "Logging into: $logfile";
+	}
+
+	set ex [open "| ../../src/scripts/nose_$__version__ --check $filename" r+];
+	while { [gets $ex line] >= 0 } {
+		if { $cl == 0 } {
+			puts $line;
+		} else {
+			puts $f $line;
+		}
+	}
+	close $ex;
+	if { $cl == 1 } {
+		close $f;
+	}
+	
+	puts "...finished";
+
+}
+
+#######################################################################
+
+proc compare_vals { val1 val2 tol } {
+
+	set diff [expr abs( $val1 - $val2 ) ];
+	if { $diff > $tol } {
+	
+		return $diff;
+	
+	} else {
+	
+		return 0;
+	
+	}
+
+}
+
+
+########################################################################
+#                         SCRIPT BODY                                  #
+########################################################################
+
+
+for { set i 1 } { $i <= $__t_count } { incr i } {
+
+	
+	set dname [file join . $__nose__testsetd__($i)];
+	
+	cd $dname;
+
+	source $__nose__testsetf__($i);
+
+	cd $cdir;
+
+}
+
+exit $result

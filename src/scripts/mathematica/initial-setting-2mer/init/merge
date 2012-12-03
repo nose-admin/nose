@@ -1,0 +1,12 @@
+#!/bin/bash
+cd ../data
+rm computed_data.dat
+for i in `seq 9 -1 1`;
+        do
+		cat HOMO*$i* | sed "s/@@@\(..\)\(.*\)/@@@\1$i,\2/g" >> computed_data.dat
+        done  
+chmod a-w computed_data.dat
+rm HOMO*
+cd ..
+chmod a-w data
+cd init

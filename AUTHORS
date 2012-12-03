@@ -1,0 +1,19 @@
+Authors as of 2009/12/03 (until recently, this file contained also authors of code for the LNOSE)
+
+	Tomas Mancal
+	Vytautas Balevicius
+	Jan Olsina
+	Elizabeth L. Read
+
+Most of the code written by 
+	Tomas Mancal, mancal@karlov.mff.cuni.cz (formerly: tmancal@lbl.gov)
+
+QME code created by
+	Jan Olsina, 
+
+Some code concerning the weak excitons in the QME module was written by
+	Vytautas Balevicius, 
+	
+Some parts of the LNOSE code concerning input/output and the orfact module that were adopted by NOSE were written by
+	Elizabeth L. Read, eread@uclink.berkeley.edu
+

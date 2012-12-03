@@ -1,0 +1,21 @@
+#!/bin/bash
+#	cat REDFIELD-script-init.m  REDFIELD-script.m | math -noprompt | grep '"@' | sed 's/"//g; s/,//g; s/}{/ IM /g; s/[{}]//g; s/*\^/E/g'
+
+echo 'index 1'
+echo 'SECULAR=False; \[Rho]0={1,0,0,0,0,0,0,0,0};' | cat QME-script-init.m - QME-script.m | math -noprompt | grep '"@' | sed 's/"//g; s/,//g; s/}{/ IM /g; s/[{}]//g; s/*\^/E/g' > ../data/HOMOqme1a.dat
+echo 'SECULAR=False; \[Rho]0={1,0,0};' | cat QME-OPTICAL-script-init.m - QME-OPTICAL-script.m | math -noprompt | grep '"@' | sed 's/"//g; s/,//g; s/}{/ IM /g; s/[{}]//g; s/*\^/E/g' > ../data/HOMOqme1b.dat
+echo 'SECULAR=False; \[Rho]0={1,0,0,0,0,0,0,0,0};' | cat QME-OC2-script-init.m - QME-OC2-script.m | math -noprompt | grep '"@' | sed 's/"//g; s/,//g; s/}{/ IM /g; s/[{}]//g; s/*\^/E/g' > ../data/HOMOqme1c.dat
+
+echo 'index 3'
+echo 'SECULAR=False; \[Rho]0={0,0,1,0,0,0,0,0,0};' | cat QME-script-init.m - QME-script.m | math -noprompt | grep '"@' | sed 's/"//g; s/,//g; s/}{/ IM /g;s/[{}]//g; s/*\^/E/g' > ../data/HOMOqme3a.dat
+echo 'SECULAR=False; \[Rho]0={0,0,1};' | cat QME-OPTICAL-script-init.m - QME-OPTICAL-script.m | math -noprompt | grep '"@' | sed 's/"//g; s/,//g; s/}{/ IM /g; s/[{}]//g; s/*\^/E/g' > ../data/HOMOqme3b.dat
+echo 'SECULAR=False; \[Rho]0={0,0,1,0,0,0,0,0,0};' | cat QME-OC2-script-init.m - QME-OC2-script.m | math -noprompt | grep '"@' | sed 's/"//g; s/,//g; s/}{/ IM /g; s/[{}]//g; s/*\^/E/g' > ../data/HOMOqme3c.dat
+
+echo 'index 5'
+echo 'SECULAR=False; \[Rho]0={0,0,0,0,1,0,0,0,0};' | cat QME-script-init.m - QME-script.m | math -noprompt | grep '"@' | sed 's/"//g; s/,//g; s/}{/ IM /g;s/[{}]//g; s/*\^/E/g' > ../data/HOMOqme5a.dat
+echo 'SECULAR=False; \[Rho]0={0,0,0,0,1,0,0,0,0};' | cat QME-OC2-script-init.m - QME-OC2-script.m | math -noprompt | grep '"@' | sed 's/"//g; s/,//g; s/}{/ IM /g; s/[{}]//g; s/*\^/E/g' > ../data/HOMOqme5c.dat
+
+echo 'index 7'
+echo 'SECULAR=False; \[Rho]0={0,0,0,0,0,0,1,0,0};' | cat QME-script-init.m - QME-script.m | math -noprompt | grep '"@' | sed 's/"//g; s/,//g; s/}{/ IM /g;s/[{}]//g; s/*\^/E/g' > ../data/HOMOqme7a.dat
+echo 'SECULAR=False; \[Rho]0={0,0,0,0,0,0,1,0,0};' | cat QME-OC2-script-init.m - QME-OC2-script.m | math -noprompt | grep '"@' | sed 's/"//g; s/,//g; s/}{/ IM /g; s/[{}]//g; s/*\^/E/g' > ../data/HOMOqme7c.dat
+

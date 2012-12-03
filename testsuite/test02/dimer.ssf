@@ -1,0 +1,27 @@
+#
+# Spectroscopic structure file for a simple monomer
+#
+BEGIN_SSF
+#
+UNITS_ENERGY  wn
+#
+BEGIN_BLOCK 1    ;# just a sigle block with a single transition
+  TRANSITION  1   1.0 0.0 0.0   1.0 0.0 0.0   2 12500  1
+  TRANSITION  2   0.0 0.0 1.0   0.5 1.0 0.0   2 12000  1
+  COUPLING 1 2 100.0
+END_BLOCK
+#
+#
+# Definition of correlation function 1
+BEGIN_CORRF 1
+  BEGIN_MODE 1
+    MODE_TYPE                  BROWNIAN
+    REORGANIZATION_ENERGY 30
+    CORRELATION_TIME      100
+  END_MODE
+END_CORRF
+#
+END_SSF
+#
+# end of file
+#

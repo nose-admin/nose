@@ -1,0 +1,40 @@
+NOSE specific installation instructions
+=======================================
+
+After downloading the NOSE package, unpack it using gzip and tar tools.
+In the root of the source code tree, configure the package (see details
+and options in the INSTALL file in the root of the package)
+
+> ./configure
+
+Then compile the package by typing
+
+> make
+
+and install it by
+
+> make install
+
+To finish the installation set enviromental variable NOSE_HOME to 
+'$PACKAGE_PATH/nose-home', where $PACKAGE_PATH is the path into which
+you installed the package (standard is /usr/local/bin). If your system
+is parallelization capable, you might need to start the parallel
+environmet, such as LAM by calling 'lamboot' command.
+
+ONLY THEN YOU CAN PERFORM TESTS OF THE PACKEGE 
+(it is not standard by this is how it is now)
+
+To perform simple test, type
+
+> make check
+
+Summary
+=======
+
+For NOSE to run properly you need environmental variable
+
+NOSE_HOME 
+
+to be set. If your system parallel version of NOSE, you need
+to set up the parallel environment before you start.
+ 

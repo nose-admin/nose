@@ -1,0 +1,19 @@
+proc TESTSET { args } {
+	global __nose__testsetd__;
+	global __nose__testsetf__;
+	global __t_count;
+	
+	incr __t_count
+	
+	set arg1 [lindex $args 0];
+	set arg2 [lindex $args 1];
+	
+	set  __nose__testsetd__($__t_count) $arg1;
+	set  __nose__testsetf__($__t_count) $arg2;
+
+}
+
+
+global __t_count;
+
+set __t_count 0;

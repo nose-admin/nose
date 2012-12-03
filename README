@@ -1,0 +1,15 @@
+NOSE README
+
+Last change: 05-19-2006
+
+Compilation notes
+-----------------
+
+To compile this program you need a fortran compiler (preferentially gfortran that is a part of gcc package).
+Port on other compilers will soon follow. To run scripts Tcl is required.
+
+See project web site at 
+
+http://sourceforge.net/projects/nose-project/
+
+for more information.

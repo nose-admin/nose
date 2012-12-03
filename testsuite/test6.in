@@ -1,0 +1,2 @@
+puts "Test 06";
+TESTSET  test03 testset01 ;

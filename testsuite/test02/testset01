@@ -1,0 +1,3 @@
+CONF dimer.conf test01.log
+ABS  spect_abs.dat
+

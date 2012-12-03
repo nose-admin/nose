@@ -1,0 +1,31 @@
+#
+# Very simple script compiler
+#
+
+global __version__;
+
+set tcl   [lindex $argv 0];
+set fname [lindex $argv 1];
+set src   [lindex $argv 2];
+set __version__  [lindex $argv 3];
+
+set f [open $src r];
+set all [read $f];
+close $f;
+
+set f [open test.src r];
+set head [read $f];
+close $f;
+
+set fo [open $fname w 0775];
+
+puts $fo "#! $tcl ";
+puts $fo $head;
+puts $fo $all;
+puts $fo "global __version__";
+puts $fo "set __version__ $__version__";
+puts $fo "source [file join . scripts mktest]";
+
+close $fo
+
+

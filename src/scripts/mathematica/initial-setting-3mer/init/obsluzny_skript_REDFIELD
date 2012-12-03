@@ -1,0 +1,28 @@
+#!/bin/bash
+
+echo 'index 1'
+echo '\[Rho]0=Table[Table[If[(i==1&&j==2)||(i==2&&j==1)||(i==2&&j==2)||(i==2&&j==5)||(i==5&&j==2),1,0],{j,1,7}],{i,1,7}];' | cat REDFIELD-script-init.m -  REDFIELD-script.m | math -noprompt | grep '"@' | sed 's/"//g; s/,//g; s/}{/ IM /g; s/[{}]//g; s/*\^/E/g' > ../data/HOMO_R1
+
+echo 'index 2'
+echo '\[Rho]0=Table[Table[If[(i==1&&j==3)||(i==3&&j==1)||(i==2&&j==3)||(i==2&&j==6)||(i==6&&j==2),1,0],{j,1,7}],{i,1,7}];' | cat REDFIELD-script-init.m -  REDFIELD-script.m | math -noprompt | grep '"@' | sed 's/"//g; s/,//g; s/}{/ IM /g; s/[{}]//g; s/*\^/E/g' > ../data/HOMO_R2
+
+echo 'index 3'
+echo '\[Rho]0=Table[Table[If[(i==1&&j==4)||(i==4&&j==1)||(i==2&&j==4)||(i==2&&j==7)||(i==7&&j==2),1,0],{j,1,7}],{i,1,7}];' | cat REDFIELD-script-init.m -  REDFIELD-script.m | math -noprompt | grep '"@' | sed 's/"//g; s/,//g; s/}{/ IM /g; s/[{}]//g; s/*\^/E/g' > ../data/HOMO_R3
+
+echo 'index 4'
+echo '\[Rho]0=Table[Table[If[                            (i==3&&j==2)||(i==3&&j==5)||(i==5&&j==3),1,0],{j,1,7}],{i,1,7}];' | cat REDFIELD-script-init.m -  REDFIELD-script.m | math -noprompt | grep '"@' | sed 's/"//g; s/,//g; s/}{/ IM /g; s/[{}]//g; s/*\^/E/g' > ../data/HOMO_R4
+
+echo 'index 5'
+echo '\[Rho]0=Table[Table[If[                            (i==3&&j==3)||(i==3&&j==6)||(i==6&&j==3),1,0],{j,1,7}],{i,1,7}];' | cat REDFIELD-script-init.m - REDFIELD-script.m | math -noprompt | grep '"@' | sed 's/"//g; s/,//g; s/}{/ IM /g; s/[{}]//g; s/*\^/E/g' > ../data/HOMO_R5
+
+echo 'index 6'
+echo '\[Rho]0=Table[Table[If[                            (i==3&&j==4)||(i==3&&j==7)||(i==7&&j==3),1,0],{j,1,7}],{i,1,7}];' | cat REDFIELD-script-init.m - REDFIELD-script.m | math -noprompt | grep '"@' | sed 's/"//g; s/,//g; s/}{/ IM /g; s/[{}]//g; s/*\^/E/g' > ../data/HOMO_R6
+
+echo 'index 7'
+echo '\[Rho]0=Table[Table[If[                            (i==4&&j==2)||(i==4&&j==5)||(i==5&&j==4),1,0],{j,1,7}],{i,1,7}];' | cat REDFIELD-script-init.m - REDFIELD-script.m | math -noprompt | grep '"@' | sed 's/"//g; s/,//g; s/}{/ IM /g; s/[{}]//g; s/*\^/E/g' > ../data/HOMO_R7
+
+echo 'index 8'
+echo '\[Rho]0=Table[Table[If[                            (i==4&&j==3)||(i==4&&j==6)||(i==6&&j==4),1,0],{j,1,7}],{i,1,7}];' | cat REDFIELD-script-init.m - REDFIELD-script.m | math -noprompt | grep '"@' | sed 's/"//g; s/,//g; s/}{/ IM /g; s/[{}]//g; s/*\^/E/g' > ../data/HOMO_R8
+
+echo 'index 9'
+echo '\[Rho]0=Table[Table[If[                            (i==4&&j==4)||(i==4&&j==7)||(i==7&&j==4),1,0],{j,1,7}],{i,1,7}];' | cat REDFIELD-script-init.m - REDFIELD-script.m | math -noprompt | grep '"@' | sed 's/"//g; s/,//g; s/}{/ IM /g; s/[{}]//g; s/*\^/E/g' > ../data/HOMO_R9

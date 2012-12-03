@@ -1,0 +1,15 @@
+04/22/2009 - News restarted. Starting from today, the most important development will be described here, again.
+
+02/06/2008 - NOSE moved to SourceForge.net. Lapack 95 needs to be downloaded separately.
+
+10/24/2007 - version 0.5.3 - QME module is partially working
+
+03/05/2007 - version 0.5.2 - calculates fluorescence spectrum
+
+02/21/2007 - version 0.5.1 - this version is able to calculate first order polarization and the linear
+			 absorption spectrum. Program is MPI parallel and uses a new configuration file format.
+			 
+01/15/2007 - version 0.5.0 - starting point of a MPI parallel version of NOSE
+
+
+

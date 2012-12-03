@@ -1,0 +1,71 @@
+#
+# Very simple script compiler
+#
+
+#
+# executable path of the Tcl shell
+#
+set ex [lindex $argv 0];
+
+#
+# mpi driver and driver options
+#
+set mpi [lindex $argv 1];
+
+#
+# output file name
+#
+set file [lindex $argv 2];
+#set file nose
+
+#
+# source code
+#
+set src [lindex $argv 3];
+
+#
+# home dir
+#
+set home [lindex $argv 4];
+
+#
+# exdir
+#
+set exdir [lindex $argv 5];
+
+#
+# Fortran compilation FLAGS
+#
+set fcflags [lindex $argv 6];
+
+set f [open $src r];
+set all [read $f];
+close $f;
+
+set fo [open $file w];
+
+# set the Tcl shell
+puts $fo "\#! $ex";
+puts $fo "set nhome $home";
+puts $fo "set exdir $exdir";
+puts $fo "set fcflags \"$fcflags\"";
+
+
+# set the MPI
+if { [string compare $mpi yes]==0 } {
+
+	puts $fo "set mpi yes;"
+
+} else {
+
+	puts $fo "set mpi no;"
+	
+}
+
+# write it all out
+puts $fo $all;
+
+close $fo;
+
+
+
