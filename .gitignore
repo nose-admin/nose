@@ -1,0 +1,11 @@
+Makefile
+Makefile.in
+autom4te.cache
+.cdtproject
+.project
+.cproject
+configure
+config.status
+aclocal.m4
+*.gz
+.settings
