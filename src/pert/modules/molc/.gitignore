@@ -1,0 +1,5 @@
+Makefile
+Makefile.in
+*.mod
+libmolc.a
+libmolcinp.a
