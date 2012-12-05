@@ -197,6 +197,14 @@ contains
             submethod1 = 's'
             submethod2 = '#'
 
+        else if (index(trim(method), "carotenoid-special") == 1) then
+
+            use_twoexcitons = .true.
+            read_external_evops = .false.
+            use_module_nakajima_zwanzig = .true.
+            submethod1 = '-'
+            submethod2 = '-'
+
         else if (trim(method) == "PT2-RC") then
 
             use_twoexcitons = .false.

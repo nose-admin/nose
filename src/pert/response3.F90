@@ -36,7 +36,7 @@ contains
     subroutine init_response3()
 
         integer :: t2i
-        integer :: i, k, l, j, m
+        integer(i4b) :: i, k, l, j, m, ti
 		character(len=120) :: buff
 
 !        use_Uee_index = 1 !INT(gt(2)/gt(1)) + 1
@@ -44,6 +44,7 @@ contains
         ! writes out the time when Uee is taken
         write(buff,*) 'Uee used at T = ', (use_Uee_index-1)*dt*gt(2), ' fs, at index ', use_Uee_index
 		call print_log_message(adjustl(trim(buff)),7)
+		write(*,*) 'pokus'
 
         window_doorway = .false.
 
@@ -57,18 +58,28 @@ contains
         Nf = 0
         do i = 1, nr_blocks
 
-            Ng = Ng + 1
-            Nbe = iblocks(i,i)%sblock%N1
+            Ng = Ng + size(evops(i,i)%Ueg,2)
+            Nbe = size(evops(i,i)%Ueg,1)
             Ne = Ne + Nbe
 
-            Nf = Nf + Nbe*(Nbe-1)/2
+	        if(associated(evops(i,i)%Ufe)) then
+    	    	Nf = size(evops(i,i)%Ufe,1)
+        	elseif(associated(evops(i,i)%UfeS) ) then
+	        	Nf = size(evops(i,i)%UfeS,1)
+    	    else
+        		Nf = 0
+	        end if
+
 
         end do
+
+        write(*,*) Ng, Ne, Nf
+        write(*,*) associated(evops(1,1)%Ueg), associated(evops(1,1)%Ufe), associated(evops(1,1)%UfeS)
 
         ! time step
         ddt1 = dt*gt(1)
 
-        Nt1 = Nt(1) !2**7
+        Nt1 = size(evops(1,1)%Ueg,5) !Nt(1) !2**7
         Nt3 = Nt1
 
         t2i = 1
@@ -100,11 +111,26 @@ contains
 
         if (use_twoexcitons) then
             !print *, size(oeg,1), size(oeg,2), size(iblocks(i,i)%eblock%en)
-            deg(Np:Np+Nbe-1,1) = iblocks(i,i)%eblock%dd
-            oeg(Np:Np+Nbe-1,1) = iblocks(i,i)%eblock%en
+            print *, size(deg,1), size(deg,2), size(iblocks(i,i)%eblock%dd,1), size(iblocks(i,i)%eblock%dd,2)
+
+            do k = 1, Ne
+                do l = 1, Ng
+
+				deg(k,l) = iblocks(i,i)%eblock%dd(k,l)
+                oeg(k,l) = iblocks(i,i)%eblock%en(k) - iblocks(i,i)%eblock%eng(l)
+
+                end do
+            end do
 
         else
-            deg(Np:Np+Nbe-1,1) = iblocks(i,i)%sblock%dd
+        	do k = 1, Ne
+                do l = 1, Ng
+
+				deg(k,l) = iblocks(i,i)%sblock%dd(k,l)
+
+                end do
+            end do
+
             dfe(:,:) = 0.0_dp
             j = 0
             do l = 1, Nbe
@@ -120,14 +146,20 @@ contains
                 end do
             end do
             !dfe(Np:Np+Nbf-1,Np:Np+Nbe-1) = iblocks(i,i)%sblock%dd
-            oeg(Np:Np+Nbe-1,i) = iblocks(i,i)%sblock%en
+            do k = 1, size(iblocks(i,i)%eblock%en,1)
+                do l = 1, size(iblocks(i,i)%eblock%eng,1)
+
+                oeg(k,l) = iblocks(i,i)%sblock%en(k) - iblocks(i,i)%eblock%eng(l)
+
+                end do
+            end do
 
         end if
 
         oeg = oeg - rwa
 
         ! population of the ground state
-        call make_pp(pp,i,i)
+        call make_pp(pp)
 
 
         !   Np = Np + Nbe
@@ -139,12 +171,10 @@ contains
 
             i = 1
 
-            dfe(1:Nbf,1:iblocks(i,i)%eblock%N1) = iblocks(i,i)%eblock%dd_2
+            do k = 1, Nf
+                do l = 1, Ne
 
-
-            do k = 1, Nbf
-                do l = 1, iblocks(i,i)%eblock%N1
-
+				dfe(k,l) = iblocks(i,i)%eblock%dd_2(k,l)
                 ofe(k,l) = iblocks(i,i)%eblock%en_2(k) - iblocks(i,i)%eblock%en(l)
 
                 end do
@@ -294,7 +324,7 @@ contains
             call make_orR2f(t2i)
             DEALLOCATE(extD)
 
-			else
+			else !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 			write(cbuff,'(a,2f18.12)') "R1g secular "
             call print_log_message(trim(cbuff),7)
@@ -302,6 +332,7 @@ contains
             !
             ! R1g
             !
+            print *, "R1g secular "
             ALLOCATE(extD,(Ne,Ng,Ne,Ng,Nt1))
             ALLOCATE(R1g0,(Nt1,Nt3))
             call make_orD1g_sec(extD)
@@ -313,6 +344,7 @@ contains
 			!
             ! R2g
             !
+            print *, "R2g secular "
 !            ALLOCATE(extD,(Ne,Ng,Ne,Ng,Nt1))
             ALLOCATE(R2g0,(Nt1,Nt3))
             call make_orD2g_sec(extD)
@@ -324,6 +356,7 @@ contains
             !
             ! R3g
             !
+            print *, "R3g secular "
 !            ALLOCATE(extD,(Ne,Ng,Ne,Ng,Nt1))
             ALLOCATE(R3g0,(Nt1,Nt3))
             call make_orD3g_sec(extD)
@@ -335,6 +368,7 @@ contains
             !
             ! R4g
             !
+            print *, "R4g secular "
 !            ALLOCATE(extD,(Ne,Ng,Ne,Ng,Nt1))
             ALLOCATE(R4g0,(Nt1,Nt3))
             call make_orD4g_sec(extD)
@@ -347,21 +381,24 @@ contains
 			!
 			! R1f
 			!
-            ALLOCATE(extD,(Ne,Nf,Ne,Nf,Nt1))
+            ALLOCATE(extD,(Ne,Nf,Ne,Nf,1))
             ALLOCATE(R1f0,(Nt1,Nt3))
-            call make_orD1f_sec(extD)
-            call make_orR1f_sec(t2i)
-!            DEALLOCATE(extD)
+!            ALLOCATE(extD,(Ne,Nf,Ne,Nf,Nt1))
+            ALLOCATE(R2f0,(Nt1,Nt3))
 
-			write(cbuff,'(a,2f18.12)') "R2f secular "
-            call print_log_message(trim(cbuff),7)
+            do ti = 1, Nt1 ! significantly saves memory
+            	call make_orD1f_sec(extD,ti)
+            	call make_orR1f_sec(t2i, ti)
+
+				write(cbuff,'(a,2f18.12)') "R2f secular "
+            	call print_log_message(trim(cbuff),7)
             !
 			! R2f
 			!
-!            ALLOCATE(extD,(Ne,Nf,Ne,Nf,Nt1))
-            ALLOCATE(R2f0,(Nt1,Nt3))
-            call make_orD2f_sec(extD)
-            call make_orR2f_sec(t2i)
+            	call make_orD2f_sec(extD,ti)
+            	call make_orR2f_sec(t2i,ti)
+            end do
+
             DEALLOCATE(extD)
 
 
@@ -487,22 +524,24 @@ end if
     !
     ! Equilibrium population of the ground state
     !
-    subroutine make_pp(p,Nsta,Nend)
+    subroutine make_pp(p)
         real(dp), dimension(:), intent(out) :: p
-        integer :: Nsta, Nend
         ! local
         integer :: i, N
         real(dp) :: sum
 
-        temp = 300
-        N = Nend-Nsta+1
+        if(size(p) /= size(evops(1,1)%Ugg,1)) then
+        	call print_error_message(-1, 'dimension error in make_pp, module response3')
+        end if
+
+        N = size(evops(1,1)%Ugg,1)
 
         if (N == 1) then
             p(1) = 1.0_dp
         else
             sum = 0.0_dp
             do i = 1, N
-                p(i) = exp(-1.0_dp/(kb_intK*temp))
+                p(i) = exp(-iblocks(1,1)%eblock%eng(i) / temp / kB_intK)
                 sum = sum + p(i)
             end do
             p = p/sum
@@ -536,7 +575,7 @@ end if
                 do b = 1, Ne
                 do a = 1, Ng
                     DD(i,j,f,h,ti) = DD(i,j,f,h,ti) + &          ! def(g,h)
-                     orfact_23_S(i,1,g,1,e,1,b,1)* &
+                     orfact_23_S(i,j,g,h,e,d,b,a)* &
                     deg(i,j)*deg(g,h)*Ueeee(f,g,c,e,use_Uee_index) &
                     *Uegeg(c,d,b,a,ti)*rhoL(b,a)*deg(e,d)
                                                 ! dge(d,e)
@@ -586,7 +625,7 @@ end if
                 e = c
                 do a = 1, Ng
                     DD(i,j,f,h,ti) = DD(i,j,f,h,ti) + &          ! def(g,h)
-                     orfact_23_S(i,1,g,1,e,1,b,1)* &
+                     orfact_23_S(i,j,g,h,e,d,b,a)* &
                     deg(i,j)*deg(g,h)*Ueeee(f,g,c,e,use_Uee_index) &
                     *Uegeg(c,d,b,a,ti)*rhoL(b,a)*deg(e,d)
                                                 ! dge(d,e)
@@ -621,7 +660,7 @@ end if
                 b = c
                 do a = 1, Ng
                     DD(i,j,f,h,ti) = DD(i,j,f,h,ti) + &          ! def(g,h)
-                     orfact_23_S(i,1,g,1,e,1,b,1)* &
+                     orfact_23_S(i,j,g,h,e,d,b,a)* &
                     deg(i,j)*deg(g,h)*Ueeee(f,g,c,e,use_Uee_index) &
                     *Uegeg(c,d,b,a,ti)*rhoL(b,a)*deg(e,d)
                                                 ! dge(d,e)
@@ -671,7 +710,7 @@ end if
                 do a = 1, Ng
 
                     DD(i,j,f,h,ti) = DD(i,j,f,h,ti) + &          ! def(g,h)
-                     orfact_e_S(j,1,i,1,h,1,g,1,e,1,b,1)* &
+                     orfact_e_S(j,i,h,g,e,d,b,a)* &
                     dfe(j,i)*dfe(h,g)*Ueeee(f,g,c,e,use_Uee_index) &
                     *Uegeg(c,d,b,a,ti)*rhoL(b,a)*deg(e,d)
                                                 ! dge(d,e)
@@ -695,13 +734,14 @@ end if
     !
     ! orD1f propagator   SECULAR VERSION
     !
-    subroutine make_orD1f_sec(DD)
+    subroutine make_orD1f_sec(DD, ti)
         complex(dpc), dimension(:,:,:,:,:), intent(out) :: DD
+        integer(i4b), intent(in) :: ti
         ! local
-        integer :: c,e,d,b,a,f,g,h,i,j,ti
+        integer(i4b) :: c,e,d,b,a,f,g,h,i,j
 
         DD = 0.0_dp
-        do ti = 1, Nt1
+        !do ti = 1, Nt1
 
 		    ! coherences
 
@@ -722,14 +762,16 @@ end if
                 e = g
                 c = f
                 b = c
-                do a = 1, Ng
+                a = d
+                !do a = 1, Ng
 
-                    DD(i,j,f,h,ti) = DD(i,j,f,h,ti) + &          ! def(g,h)
-                     orfact_e_S(j,1,i,1,h,1,g,1,e,1,b,1)* &
+!                    DD(i,j,f,h,ti) = DD(i,j,f,h,ti) + &          ! def(g,h)
+                    DD(i,j,f,h,1) = DD(i,j,f,h,1) + &          ! def(g,h)
+                     orfact_e_S(j,i,h,g,e,d,b,a)* &
                     dfe(j,i)*dfe(h,g)*Ueeee(f,g,c,e,use_Uee_index) &
                     *Uegeg(c,d,b,a,ti)*rhoL(b,a)*deg(e,d)
                                                 ! dge(d,e)
-                end do
+                !end do
                 !end do
                 !end do
                 !end do
@@ -761,14 +803,16 @@ end if
              !   do b = 1, Ne
                 c = e
                 b = c
-                do a = 1, Ng
+                a = d
+                !do a = 1, Ng
 
-                    DD(i,j,f,h,ti) = DD(i,j,f,h,ti) + &          ! def(g,h)
-                     orfact_e_S(j,1,i,1,h,1,g,1,e,1,b,1)* &
+!                    DD(i,j,f,h,ti) = DD(i,j,f,h,ti) + &          ! def(g,h)
+                    DD(i,j,f,h,1) = DD(i,j,f,h,1) + &          ! def(g,h)
+                     orfact_e_S(j,i,h,g,e,d,b,a)* &
                     dfe(j,i)*dfe(h,g)*Ueeee(f,g,c,e,use_Uee_index) &
                     *Uegeg(c,d,b,a,ti)*rhoL(b,a)*deg(e,d)
                                                 ! dge(d,e)
-                end do
+                !end do
                 !end do
                 !end do
                 end do
@@ -782,7 +826,7 @@ end if
             end do
 
 
-        end do
+        !end do
 
     end subroutine make_orD1f_sec
 
@@ -810,7 +854,7 @@ end if
                 do b = 1, Ne
                 do a = 1, Ng
                     DD(i,j,f,h,ti) = DD(i,j,f,h,ti) + &
-                        orfact_23_S(i,1,g,1,e,1,b,1)* &
+                        orfact_23_S(i,j,g,h,e,c,b,a)* &
                        	deg(i,j)*Ueeee(f,g,e,d,use_Uee_index)*deg(e,c) &
                        	*conjg(Uegeg(d,c,b,a,ti))*rhoR(a,b)*deg(g,h) !Ugege(c,d,a,b,ti)*rhoR(a,b)
 
@@ -843,39 +887,79 @@ end if
         ! local
         integer :: c,e,d,b,a,f,g,h,i,j,ti
 
+		print *,"make_orD2g_sec"
+
         DD = 0.0_dp
         do ti = 1, Nt1
 
+			! coherences
             do i = 1, Ne
             do j = 1, Ng
             do f = 1, Ne
             do h = 1, Ng
 
                 do g = 1, Ne
-                do d = 1, Ne
-                do e = 1, Ne
+                if (f /= g) then
+                !do d = 1, Ne
+                !do e = 1, Ne
+                e = f
+                d = g
                 do c = 1, Ng
                 !do b = 1, Ne
                 b = d
-                do a = 1, Ng
+                !do a = 1, Ng
+                a = c
                     DD(i,j,f,h,ti) = DD(i,j,f,h,ti) + &
-                        orfact_23_S(i,1,g,1,e,1,b,1)* &
+                        orfact_23_S(i,j,g,h,e,c,b,a)* &
                        	deg(i,j)*Ueeee(f,g,e,d,use_Uee_index)*deg(e,c) &
                        	*conjg(Uegeg(d,c,b,a,ti))*rhoR(a,b)*deg(g,h) !Ugege(c,d,a,b,ti)*rhoR(a,b)
 
+                !end do
+                !end do
+                !end do
+                !end do
                 end do
+                end if
+                end do
+
+            end do
+            end do
+            end do
+            end do
+
+			! populations
+            do i = 1, Ne
+            do j = 1, Ng
+            do f = 1, Ne
+            do h = 1, Ng
+
+                !do g = 1, Ne
+                do d = 1, Ne
+                !do e = 1, Ne
+                g = f
+                e = d
+                do c = 1, Ng
+                !do b = 1, Ne
+                b = d
+                !do a = 1, Ng
+                a = c
+                    DD(i,j,f,h,ti) = DD(i,j,f,h,ti) + &
+                        orfact_23_S(i,j,g,h,e,c,b,a)* &
+                       	deg(i,j)*Ueeee(f,g,e,d,use_Uee_index)*deg(e,c) &
+                       	*conjg(Uegeg(d,c,b,a,ti))*rhoR(a,b)*deg(g,h) !Ugege(c,d,a,b,ti)*rhoR(a,b)
+
+                !end do
+                !end do
+                !end do
                 !end do
                 end do
                 end do
-                end do
-                end do
-
-                !stop
 
             end do
             end do
             end do
             end do
+
 
         end do
 
@@ -915,7 +999,7 @@ end if
                 !do b = 1, Ne
                 do a = 1, Ng
                     DD(i,j,f,h,ti) = DD(i,j,f,h,ti) + &          ! def(g,h)
-                     orfact_e_S(j,1,i,1,h,1,g,1,e,1,b,1)* &
+                     orfact_e_S(j,i,h,g,e,c,b,a)* &
                     dfe(j,i)*dfe(h,g)*Ueeee(f,g,e,d,use_Uee_index) &
                     *conjg(Uegeg(d,c,b,a,ti))*rhoR(a,b)*deg(e,c)
                                                 ! dge(d,e)
@@ -945,13 +1029,14 @@ end if
     !    call make_D2g(DD)
     !
     !end subroutine make_orD2f
-    subroutine make_orD2f_sec(DD)
+    subroutine make_orD2f_sec(DD,ti)
         complex(dpc), dimension(:,:,:,:,:), intent(out) :: DD
+        integer(i4b), intent(in) :: ti
         ! local
-        integer :: c,e,d,b,a,f,g,h,i,j,ti
+        integer(i4b) :: c,e,d,b,a,f,g,h,i,j
 
         DD = 0.0_dp
-        do ti = 1, Nt1
+        !do ti = 1, Nt1
 
 			! populations
             do i = 1, Ne
@@ -969,13 +1054,15 @@ end if
                 g = f
                 b = d
                 !do b = 1, Ne
-                do a = 1, Ng
-                    DD(i,j,f,h,ti) = DD(i,j,f,h,ti) + &          ! def(g,h)
-                     orfact_e_S(j,1,i,1,h,1,g,1,e,1,b,1)* &
+                !do a = 1, Ng
+                a = c
+!                    DD(i,j,f,h,ti) = DD(i,j,f,h,ti) + &          ! def(g,h)
+                    DD(i,j,f,h,1) = DD(i,j,f,h,1) + &          ! def(g,h)
+                     orfact_e_S(j,i,h,g,e,c,b,a)* &
                     dfe(j,i)*dfe(h,g)*Ueeee(f,g,e,d,use_Uee_index) &
                     *conjg(Uegeg(d,c,b,a,ti))*rhoR(a,b)*deg(e,c)
                                                 ! dge(d,e)
-                end do
+                !end do
                 !end do
                 end do
                 !end do
@@ -1004,13 +1091,15 @@ end if
                 do c = 1, Ng
                 b = d
                 !do b = 1, Ne
-                do a = 1, Ng
-                    DD(i,j,f,h,ti) = DD(i,j,f,h,ti) + &          ! def(g,h)
-                     orfact_e_S(j,1,i,1,h,1,g,1,e,1,b,1)* &
+                !do a = 1, Ng
+                a = c
+!                    DD(i,j,f,h,ti) = DD(i,j,f,h,ti) + &          ! def(g,h)
+                    DD(i,j,f,h,1) = DD(i,j,f,h,1) + &          ! def(g,h)
+                     orfact_e_S(j,i,h,g,e,c,b,a)* &
                     dfe(j,i)*dfe(h,g)*Ueeee(f,g,e,d,use_Uee_index) &
                     *conjg(Uegeg(d,c,b,a,ti))*rhoR(a,b)*deg(e,c)
                                                 ! dge(d,e)
-                end do
+                !end do
                 !end do
                 end do
                 !end do
@@ -1023,7 +1112,7 @@ end if
             end do
             end do
 
-        end do
+        !end do
 
     end subroutine make_orD2f_sec
 
@@ -1056,8 +1145,8 @@ end if
                     !print *, orfact_23(i,1,g,1,e,1,b,1)
 
                     DD(i,j,h,g,ti) = DD(i,j,h,g,ti) + &
-                        orfact_23_S(i,1,h,1,d,1,b,1)* &
-                        deg(i,j)*deg(h,f)*Ugggg(f,g,c,e,1)*  &
+                        orfact_23_S(i,j,h,f,d,e,b,a)* &
+                        deg(i,j)*deg(h,f)*Ugggg(f,g,c,e,use_Uee_index)*  &
                         conjg(Uegeg(d,c,b,a,ti))*rhoR(a,b)*deg(d,e)
                 end do
                 end do
@@ -1103,12 +1192,13 @@ end if
                 do c = 1, Ng
                 !do b = 1, Ne
                 b = d
-                do a = 1, Ng
+                !do a = 1, Ng
+                a = c
                     DD(i,j,h,g,ti) = DD(i,j,h,g,ti) + &
-                        orfact_23_S(i,1,h,1,d,1,b,1)* &
-                        deg(i,j)*deg(h,f)*Ugggg(f,g,c,e,1)*  &
+                        orfact_23_S(i,j,h,f,d,e,b,a)* &
+                        deg(i,j)*deg(h,f)*Ugggg(f,g,c,e,use_Uee_index)*  &
                         conjg(Uegeg(d,c,b,a,ti))*rhoR(a,b)*deg(d,e)
-                end do
+                !end do
                 !end do
                 end do
                 end do
@@ -1153,8 +1243,8 @@ end if
                 do a = 1, Ng
 
                     DD(i,j,h,g,ti) = DD(i,j,h,g,ti) + &
-                        orfact_23_S(i,1,h,1,c,1,b,1)* &
-                        deg(i,j)*deg(h,f)*Ugggg(f,g,e,d,1)*  &
+                        orfact_23_S(i,j,h,f,c,e,b,a)* &
+                        deg(i,j)*deg(h,f)*Ugggg(f,g,e,d,use_Uee_index)*  &
                         Uegeg(c,d,b,a,ti)*rhoL(b,a)*deg(c,e)
                 end do
                 end do
@@ -1186,27 +1276,68 @@ end if
         DD = 0.0_dp
         do ti = 1, Nt1
 
+			! coherences
             do i = 1, Ne
             do j = 1, Ng
             do h = 1, Ne
             do g = 1, Ng
 
                 do f = 1, Ng
-                do d = 1, Ng
-                do e = 1, Ng
+                if (f /= g) then
+                !do d = 1, Ng
+                d = g
+                !do e = 1, Ng
+                e = f
                 do c = 1, Ne
                 !do b = 1, Ne
                 b = c
-                do a = 1, Ng
+                !do a = 1, Ng
+                a = d
 
                     DD(i,j,h,g,ti) = DD(i,j,h,g,ti) + &
-                        orfact_23_S(i,1,h,1,c,1,b,1)* &
-                        deg(i,j)*deg(h,f)*Ugggg(f,g,e,d,1)*  &
+                        orfact_23_S(i,j,h,f,c,e,b,a)* &
+                        deg(i,j)*deg(h,f)*Ugggg(f,g,e,d,use_Uee_index)*  &
                         Uegeg(c,d,b,a,ti)*rhoL(b,a)*deg(c,e)
-                end do
+                !end do
+                !end do
+                !end do
                 !end do
                 end do
+                end if
                 end do
+
+                !stop
+
+            end do
+            end do
+            end do
+            end do
+
+			! populations
+            do i = 1, Ne
+            do j = 1, Ng
+            do h = 1, Ne
+            do g = 1, Ng
+
+                !do f = 1, Ng
+                f = g
+                do d = 1, Ng
+                !do e = 1, Ng
+                e = d
+                do c = 1, Ne
+                !do b = 1, Ne
+                b = c
+                !do a = 1, Ng
+                a = d
+
+                    DD(i,j,h,g,ti) = DD(i,j,h,g,ti) + &
+                        orfact_23_S(i,j,h,f,c,e,b,a)* &
+                        deg(i,j)*deg(h,f)*Ugggg(f,g,e,d,use_Uee_index)*  &
+                        Uegeg(c,d,b,a,ti)*rhoL(b,a)*deg(c,e)
+                !end do
+                !end do
+                !end do
+                !end do
                 end do
                 end do
 
@@ -1399,17 +1530,19 @@ end if
     !
     ! R1f with orientational averaging  SECULAR VERSION
     !
-    subroutine make_orR1f_sec(ti)
-        integer :: ti
+    subroutine make_orR1f_sec(ti,t1)
+        integer(i4b), intent(in) :: ti,t1
 
         ! local
-        integer :: t1, t3, i,j,f,h
+        integer :: t3, i,j,f,h
 
         if (ti == 1) then
 
-            R1f0 = 0.0_dp
+            !R1f0 = 0.0_dp
+            R1f0(:,t1) = 0.0_dp
+            !write(*,*) 'make_orR1f_sec'
 
-            do t1 = 1, Nt1
+            !do t1 = 1, Nt1
                 do t3 = 1, Nt1
 
                     do i = 1, Ne
@@ -1418,7 +1551,8 @@ end if
                                 h = j
                                 f = i
                                 !do h = 1, Nf
-                                    R1f0(t3,t1) = R1f0(t3,t1) + evops(1,1)%UfeS(j,i,t3)*extD(i,j,f,h,t1)
+!                                    R1f0(t3,t1) = R1f0(t3,t1) + evops(1,1)%UfeS(j,i,t3)*extD(i,j,f,h,t1)
+                                    R1f0(t3,t1) = R1f0(t3,t1) + evops(1,1)%UfeS(j,i,t3)*extD(i,j,f,h,1)
                                     							! evops(1,1)%Ufe(j,i,h,f,t3)*extD(i,j,f,h,t1)
                                                                !evops(1,1)%Ufe(i,j,f,h,t3)*extD(i,j,f,h,t1) !W2g(a,b,t3)*D2g(a,b,t1)
                                 !end do
@@ -1427,7 +1561,7 @@ end if
                     end do
 
                 end do
-            end do
+            !end do
 
         else
 
@@ -1607,17 +1741,18 @@ end if
     !
     ! R2f with orientational averaging  SECULAR VERSION
     !
-    subroutine make_orR2f_sec(ti)
-        integer :: ti
+    subroutine make_orR2f_sec(ti,t1)
+        integer(i4b) :: ti, t1
 
         ! local
-        integer :: t1, t3, i,j,f,h
+        integer(i4b) ::  t3, i,j,f,h
 
         if (ti == 1) then
 
-            R2f0 = 0.0_dp
+            !R2f0 = 0.0_dp
+            R2f0(:,t1) = 0.0_dp
 
-            do t1 = 1, Nt1
+            !do t1 = 1, Nt1
                 do t3 = 1, Nt1
 
                     do i = 1,Ne
@@ -1627,7 +1762,8 @@ end if
                                  !h = 3
                                  h = j
                                  f = i
-                                    R2f0(t3,t1) = R2f0(t3,t1) + evops(1,1)%UfeS(j,i,t3)*extD(i,j,f,h,t1)
+!                                    R2f0(t3,t1) = R2f0(t3,t1) + evops(1,1)%UfeS(j,i,t3)*extD(i,j,f,h,t1)
+                                    R2f0(t3,t1) = R2f0(t3,t1) + evops(1,1)%UfeS(j,i,t3)*extD(i,j,f,h,1)
                                     							! evops(1,1)%Ufe(j,i,h,f,t3)*extD(i,j,f,h,t1)
                                                                !evops(1,1)%Ufe(i,j,f,h,t3)*extD(i,j,f,h,t1) !W2g(a,b,t3)*D2g(a,b,t1)
                                 !end do
@@ -1636,7 +1772,7 @@ end if
                     end do
 
                 end do
-            end do
+            !end do
 
         else
 
@@ -1729,9 +1865,10 @@ end if
                         do j = 1, Ng
                             !do h = 1, Ne
                                 h = i
-                                do g = 1, Ng
+                                !do g = 1, Ng
+                                	g = j
                                     R3g0(t3,t1) = R3g0(t3,t1) + evops(1,1)%Ueg(i,j,h,g,t3)*extD(i,j,h,g,t1) !W2g(a,b,t3)*D2g(a,b,t1)
-                                end do
+                                !end do
                             !end do
                         end do
                     end do
@@ -1857,9 +1994,10 @@ end if
                         do j = 1, Ng
                             !do h = 1, Ne
                             h = i
-                                do g = 1, Ng
+                                !do g = 1, Ng
+                                	g = j
                                     R4g0(t3,t1) = R4g0(t3,t1) + evops(1,1)%Ueg(i,j,h,g,t3)*extD(i,j,h,g,t1) !W2g(a,b,t3)*D2g(a,b,t1)
-                                end do
+                                !end do
                             !end do
                         end do
                     end do

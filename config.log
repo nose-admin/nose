@@ -8720,16 +8720,16 @@ Target: x86_64-linux-gnu
 Configured with: ../src/configure -v --with-pkgversion='Ubuntu/Linaro 4.5.2-8ubuntu4' --with-bugurl=file:///usr/share/doc/gcc-4.5/README.Bugs --enable-languages=c,c++,fortran,objc,obj-c++ --prefix=/usr --program-suffix=-4.5 --enable-shared --enable-multiarch --with-multiarch-defaults=x86_64-linux-gnu --enable-linker-build-id --with-system-zlib --libexecdir=/usr/lib/x86_64-linux-gnu --without-included-gettext --enable-threads=posix --with-gxx-include-dir=/usr/include/c++/4.5 --libdir=/usr/lib/x86_64-linux-gnu --enable-nls --with-sysroot=/ --enable-clocale=gnu --enable-libstdcxx-debug --enable-libstdcxx-time=yes --enable-plugin --enable-gold --enable-ld=default --with-plugin-ld=ld.gold --enable-objc-gc --disable-werror --with-arch-32=i686 --with-tune=generic --enable-checking=release --build=x86_64-linux-gnu --host=x86_64-linux-gnu --target=x86_64-linux-gnu
 Thread model: posix
 gcc version 4.5.2 (Ubuntu/Linaro 4.5.2-8ubuntu4) 
- /usr/lib/x86_64-linux-gnu/gcc/x86_64-linux-gnu/4.5.2/f951 conftest.f -ffixed-form -quiet -dumpbase conftest.f -mtune=generic -march=x86-64 -auxbase conftest -g -O2 -version -fintrinsic-modules-path /usr/lib/x86_64-linux-gnu/gcc/x86_64-linux-gnu/4.5.2/finclude -o /tmp/ccGWWKu3.s
+ /usr/lib/x86_64-linux-gnu/gcc/x86_64-linux-gnu/4.5.2/f951 conftest.f -ffixed-form -quiet -dumpbase conftest.f -mtune=generic -march=x86-64 -auxbase conftest -g -O2 -version -fintrinsic-modules-path /usr/lib/x86_64-linux-gnu/gcc/x86_64-linux-gnu/4.5.2/finclude -o /tmp/cc5sct42.s
 GNU Fortran (Ubuntu/Linaro 4.5.2-8ubuntu4) version 4.5.2 (x86_64-linux-gnu)
 	compiled by GNU C version 4.5.2, GMP version 4.3.2, MPFR version 3.0.0-p8, MPC version 0.9
 GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072
 GNU Fortran (Ubuntu/Linaro 4.5.2-8ubuntu4) version 4.5.2 (x86_64-linux-gnu)
 	compiled by GNU C version 4.5.2, GMP version 4.3.2, MPFR version 3.0.0-p8, MPC version 0.9
 GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072
- as -V -Qy --64 -o /tmp/ccaQcMuV.o /tmp/ccGWWKu3.s
+ as -V -Qy --64 -o /tmp/ccd5VUES.o /tmp/cc5sct42.s
 GNU assembler version 2.21.0 (x86_64-linux-gnu) using BFD version (GNU Binutils for Ubuntu) 2.21.0.20110327
- /usr/lib/x86_64-linux-gnu/gcc/x86_64-linux-gnu/4.5.2/collect2 --build-id --eh-frame-hdr -m elf_x86_64 --hash-style=gnu -dynamic-linker /lib64/ld-linux-x86-64.so.2 -z relro -o conftest /usr/lib/x86_64-linux-gnu/gcc/x86_64-linux-gnu/4.5.2/../../../crt1.o /usr/lib/x86_64-linux-gnu/gcc/x86_64-linux-gnu/4.5.2/../../../crti.o /usr/lib/x86_64-linux-gnu/gcc/x86_64-linux-gnu/4.5.2/crtbegin.o -L/usr/lib/x86_64-linux-gnu/gcc/x86_64-linux-gnu/4.5.2 -L/usr/lib/x86_64-linux-gnu/gcc/x86_64-linux-gnu/4.5.2/../../.. -L/usr/lib/x86_64-linux-gnu /tmp/ccaQcMuV.o -lgfortran -lm -lgcc_s -lgcc -lc -lgcc_s -lgcc /usr/lib/x86_64-linux-gnu/gcc/x86_64-linux-gnu/4.5.2/crtend.o /usr/lib/x86_64-linux-gnu/gcc/x86_64-linux-gnu/4.5.2/../../../crtn.o
+ /usr/lib/x86_64-linux-gnu/gcc/x86_64-linux-gnu/4.5.2/collect2 --build-id --eh-frame-hdr -m elf_x86_64 --hash-style=gnu -dynamic-linker /lib64/ld-linux-x86-64.so.2 -z relro -o conftest /usr/lib/x86_64-linux-gnu/gcc/x86_64-linux-gnu/4.5.2/../../../crt1.o /usr/lib/x86_64-linux-gnu/gcc/x86_64-linux-gnu/4.5.2/../../../crti.o /usr/lib/x86_64-linux-gnu/gcc/x86_64-linux-gnu/4.5.2/crtbegin.o -L/usr/lib/x86_64-linux-gnu/gcc/x86_64-linux-gnu/4.5.2 -L/usr/lib/x86_64-linux-gnu/gcc/x86_64-linux-gnu/4.5.2/../../.. -L/usr/lib/x86_64-linux-gnu /tmp/ccd5VUES.o -lgfortran -lm -lgcc_s -lgcc -lc -lgcc_s -lgcc /usr/lib/x86_64-linux-gnu/gcc/x86_64-linux-gnu/4.5.2/crtend.o /usr/lib/x86_64-linux-gnu/gcc/x86_64-linux-gnu/4.5.2/../../../crtn.o
 configure:3886: result: -v
 configure:3888: checking for Fortran 77 libraries of gfortran
 configure:3911: gfortran -o conftest -g -O2 -v conftest.f
@@ -8738,16 +8738,16 @@ Target: x86_64-linux-gnu
 Configured with: ../src/configure -v --with-pkgversion='Ubuntu/Linaro 4.5.2-8ubuntu4' --with-bugurl=file:///usr/share/doc/gcc-4.5/README.Bugs --enable-languages=c,c++,fortran,objc,obj-c++ --prefix=/usr --program-suffix=-4.5 --enable-shared --enable-multiarch --with-multiarch-defaults=x86_64-linux-gnu --enable-linker-build-id --with-system-zlib --libexecdir=/usr/lib/x86_64-linux-gnu --without-included-gettext --enable-threads=posix --with-gxx-include-dir=/usr/include/c++/4.5 --libdir=/usr/lib/x86_64-linux-gnu --enable-nls --with-sysroot=/ --enable-clocale=gnu --enable-libstdcxx-debug --enable-libstdcxx-time=yes --enable-plugin --enable-gold --enable-ld=default --with-plugin-ld=ld.gold --enable-objc-gc --disable-werror --with-arch-32=i686 --with-tune=generic --enable-checking=release --build=x86_64-linux-gnu --host=x86_64-linux-gnu --target=x86_64-linux-gnu
 Thread model: posix
 gcc version 4.5.2 (Ubuntu/Linaro 4.5.2-8ubuntu4) 
- /usr/lib/x86_64-linux-gnu/gcc/x86_64-linux-gnu/4.5.2/f951 conftest.f -ffixed-form -quiet -dumpbase conftest.f -mtune=generic -march=x86-64 -auxbase conftest -g -O2 -version -fintrinsic-modules-path /usr/lib/x86_64-linux-gnu/gcc/x86_64-linux-gnu/4.5.2/finclude -o /tmp/ccALAABc.s
+ /usr/lib/x86_64-linux-gnu/gcc/x86_64-linux-gnu/4.5.2/f951 conftest.f -ffixed-form -quiet -dumpbase conftest.f -mtune=generic -march=x86-64 -auxbase conftest -g -O2 -version -fintrinsic-modules-path /usr/lib/x86_64-linux-gnu/gcc/x86_64-linux-gnu/4.5.2/finclude -o /tmp/ccN0x2F8.s
 GNU Fortran (Ubuntu/Linaro 4.5.2-8ubuntu4) version 4.5.2 (x86_64-linux-gnu)
 	compiled by GNU C version 4.5.2, GMP version 4.3.2, MPFR version 3.0.0-p8, MPC version 0.9
 GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072
 GNU Fortran (Ubuntu/Linaro 4.5.2-8ubuntu4) version 4.5.2 (x86_64-linux-gnu)
 	compiled by GNU C version 4.5.2, GMP version 4.3.2, MPFR version 3.0.0-p8, MPC version 0.9
 GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072
- as -V -Qy --64 -o /tmp/ccGRsPP4.o /tmp/ccALAABc.s
+ as -V -Qy --64 -o /tmp/ccepEpoY.o /tmp/ccN0x2F8.s
 GNU assembler version 2.21.0 (x86_64-linux-gnu) using BFD version (GNU Binutils for Ubuntu) 2.21.0.20110327
- /usr/lib/x86_64-linux-gnu/gcc/x86_64-linux-gnu/4.5.2/collect2 --build-id --eh-frame-hdr -m elf_x86_64 --hash-style=gnu -dynamic-linker /lib64/ld-linux-x86-64.so.2 -z relro -o conftest /usr/lib/x86_64-linux-gnu/gcc/x86_64-linux-gnu/4.5.2/../../../crt1.o /usr/lib/x86_64-linux-gnu/gcc/x86_64-linux-gnu/4.5.2/../../../crti.o /usr/lib/x86_64-linux-gnu/gcc/x86_64-linux-gnu/4.5.2/crtbegin.o -L/usr/lib/x86_64-linux-gnu/gcc/x86_64-linux-gnu/4.5.2 -L/usr/lib/x86_64-linux-gnu/gcc/x86_64-linux-gnu/4.5.2/../../.. -L/usr/lib/x86_64-linux-gnu /tmp/ccGRsPP4.o -lgfortran -lm -lgcc_s -lgcc -lc -lgcc_s -lgcc /usr/lib/x86_64-linux-gnu/gcc/x86_64-linux-gnu/4.5.2/crtend.o /usr/lib/x86_64-linux-gnu/gcc/x86_64-linux-gnu/4.5.2/../../../crtn.o
+ /usr/lib/x86_64-linux-gnu/gcc/x86_64-linux-gnu/4.5.2/collect2 --build-id --eh-frame-hdr -m elf_x86_64 --hash-style=gnu -dynamic-linker /lib64/ld-linux-x86-64.so.2 -z relro -o conftest /usr/lib/x86_64-linux-gnu/gcc/x86_64-linux-gnu/4.5.2/../../../crt1.o /usr/lib/x86_64-linux-gnu/gcc/x86_64-linux-gnu/4.5.2/../../../crti.o /usr/lib/x86_64-linux-gnu/gcc/x86_64-linux-gnu/4.5.2/crtbegin.o -L/usr/lib/x86_64-linux-gnu/gcc/x86_64-linux-gnu/4.5.2 -L/usr/lib/x86_64-linux-gnu/gcc/x86_64-linux-gnu/4.5.2/../../.. -L/usr/lib/x86_64-linux-gnu /tmp/ccepEpoY.o -lgfortran -lm -lgcc_s -lgcc -lc -lgcc_s -lgcc /usr/lib/x86_64-linux-gnu/gcc/x86_64-linux-gnu/4.5.2/crtend.o /usr/lib/x86_64-linux-gnu/gcc/x86_64-linux-gnu/4.5.2/../../../crtn.o
 configure:4085: result:  -L/usr/lib/x86_64-linux-gnu/gcc/x86_64-linux-gnu/4.5.2 -L/usr/lib/x86_64-linux-gnu/gcc/x86_64-linux-gnu/4.5.2/../../.. -L/usr/lib/x86_64-linux-gnu -lgfortran -lm
 configure:4102: checking for dummy main to link with Fortran 77 libraries
 configure:4136: gcc -o conftest -g -O2   conftest.c   -L/usr/lib/x86_64-linux-gnu/gcc/x86_64-linux-gnu/4.5.2 -L/usr/lib/x86_64-linux-gnu/gcc/x86_64-linux-gnu/4.5.2/../../.. -L/usr/lib/x86_64-linux-gnu -lgfortran -lm >&5
@@ -8757,7 +8757,7 @@ configure:4214: checking for Fortran 77 name-mangling scheme
 configure:4227: gfortran -c -g -O2 conftest.f >&5
 configure:4227: $? = 0
 configure:4268: gcc -o conftest -g -O2   conftest.c cfortran_test.o   -L/usr/lib/x86_64-linux-gnu/gcc/x86_64-linux-gnu/4.5.2 -L/usr/lib/x86_64-linux-gnu/gcc/x86_64-linux-gnu/4.5.2/../../.. -L/usr/lib/x86_64-linux-gnu -lgfortran -lm >&5
-/tmp/ccjszzj9.o: In function `main':
+/tmp/ccc7CeG8.o: In function `main':
 /home/olsij4am/git/nose/conftest.c:28: undefined reference to `foobar'
 collect2: ld returned 1 exit status
 configure:4268: $? = 1
@@ -8800,7 +8800,7 @@ configure:4326: $? = 0
 configure:4368: result: lower case, underscore, no extra underscore
 configure:4487: checking for sgemm_
 configure:4487: gcc -o conftest -g -O2   conftest.c   -L/usr/lib/x86_64-linux-gnu/gcc/x86_64-linux-gnu/4.5.2 -L/usr/lib/x86_64-linux-gnu/gcc/x86_64-linux-gnu/4.5.2/../../.. -L/usr/lib/x86_64-linux-gnu -lgfortran -lm >&5
-/tmp/cc881pil.o: In function `main':
+/tmp/ccHGlQVk.o: In function `main':
 /home/olsij4am/git/nose/conftest.c:51: undefined reference to `sgemm_'
 collect2: ld returned 1 exit status
 configure:4487: $? = 1
@@ -9136,7 +9136,7 @@ configure:5222: checking for sgemm_ in -lblas
 configure:5265: result: yes
 configure:5381: checking for cheev_
 configure:5381: gcc -o conftest -g -O2   conftest.c  -lblas  -L/usr/lib/x86_64-linux-gnu/gcc/x86_64-linux-gnu/4.5.2 -L/usr/lib/x86_64-linux-gnu/gcc/x86_64-linux-gnu/4.5.2/../../.. -L/usr/lib/x86_64-linux-gnu -lgfortran -lm >&5
-/tmp/ccmG2Bd0.o: In function `main':
+/tmp/ccVmrYmV.o: In function `main':
 /home/olsij4am/git/nose/conftest.c:52: undefined reference to `cheev_'
 collect2: ld returned 1 exit status
 configure:5381: $? = 1
