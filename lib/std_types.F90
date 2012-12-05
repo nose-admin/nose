@@ -4,6 +4,7 @@
 !
 module std_types
 
+  integer, parameter :: i8b = selected_int_kind(17)
   integer, parameter :: i4b = selected_int_kind(9)
   integer, parameter :: i2b = selected_int_kind(4)
   integer, parameter :: i1b = selected_int_kind(2)
