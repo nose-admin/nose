@@ -50,6 +50,11 @@ module numer_matrix
     	module procedure matrix_power_cmplx3
     end interface
 
+    interface matrix_exp
+    	module procedure matrix_exp_real
+    	module procedure matrix_exp_cmplx
+    end interface
+
     interface spec_generalized
     	module procedure spec_generalized_real
     	module procedure spec_generalized_cmplx
@@ -60,13 +65,15 @@ module numer_matrix
     	module procedure trace_cmplx
     end interface
 
-    public :: spec, spec2, inv, matrix_power, trace
+    public :: spec, spec2, inv, matrix_power, trace, matrix_exp
 
 	private :: eigsrt, eigconvention, iminloc
 	private :: inv_real, inv_cmplx, spec_real, spec_cmplx, spec2_real, spec2_cmplx
 	private :: eigsrt_real, eigsrt_cmplx, eigconvention_real, eigconvention_cmplx
 	private :: matrix_power_real, matrix_power_real2, matrix_power_real3
 	private :: matrix_power_cmplx, matrix_power_cmplx2, matrix_power_cmplx3
+	private :: matrix_exp_real !, matrix_exp_real2, matrix_exp_real3
+	private :: matrix_exp_cmplx !, matrix_exp_cmplx2, matrix_exp_cmplx3
 	private :: spec_generalized_real, spec_generalized_cmplx, eigsrt_real_mat, eigsrt_cmplx_mat
 	private :: trace_real, trace_cmplx
 
@@ -522,6 +529,43 @@ contains
 	call matrix_power_cmplx(A, real(r,dp))
 
   end subroutine matrix_power_cmplx3
+
+  !
+  ! matrix exponential
+  !
+  subroutine matrix_exp_real(A)
+  	real(dp), dimension(:,:), intent(inout) 	:: A
+
+  	real(dp), dimension(size(A,1),size(A,2))	:: S, invS, AA
+  	integer(i4b)								:: i
+
+	call spec(A,S,AA)
+	call inv(S,invS)
+
+	A = matmul(matmul(invS,A),S)
+	do i=1,size(A,1)
+		A(i,i) = exp(A(i,i))
+	end do
+	A = matmul(matmul(S,A),invS)
+
+  end subroutine matrix_exp_real
+
+  subroutine matrix_exp_cmplx(A)
+  	complex(dpc), dimension(:,:), intent(inout) 	:: A
+
+  	complex(dpc), dimension(size(A,1),size(A,2))	:: S, invS, AA
+  	integer(i4b)								:: i
+
+	call spec(A,S,AA)
+	call inv(S,invS)
+
+	A = matmul(matmul(invS,A),S)
+	do i=1,size(A,1)
+		A(i,i) = exp(A(i,i))
+	end do
+	A = matmul(matmul(S,A),invS)
+
+  end subroutine matrix_exp_cmplx
 
   !
   ! eigenvalue problem with overlap matrix
