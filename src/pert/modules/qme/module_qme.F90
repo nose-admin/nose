@@ -1,4 +1,3 @@
-#include "util_allocation.h"
 !
 !
 !
@@ -17,6 +16,8 @@ module module_qme
 
 	use qme_nakajima_zwanzig
 	use qme_weak_excitons
+	use qme_excitonic_networks
+	use qme_vibronic_networks
 
 	implicit none
 
@@ -250,6 +251,26 @@ contains
 		end if
 
 		end if ! if (nr_blocks > 0) then
+
+		!*************************************************************
+		! Call qme_excitonic_networks
+		!*************************************************************
+		if (resources_output_contains("excitonic_networks")) then
+
+			call main_excitonic_networks()
+
+		end if
+
+
+
+		!*************************************************************
+		! Call qme_vibronic_networks
+		!*************************************************************
+		if (resources_output_contains("vibronic_networks")) then
+
+			call main_vibronic_networks() 
+			
+		end if
 
 	end subroutine do_qme_work
 
@@ -845,9 +866,6 @@ contains
 		if (resources_output_contains(NOSE_RDM_B01_CONJG)) then
 			call write_time_evolutions('O',.false.,.true.)
 		endif
-		call write_evolution_operators('O')
-		call write_redfield_tensor('O')
-
 
 	end subroutine read_coherences
 
@@ -890,6 +908,50 @@ contains
 
 
 	!*************************************************************
+	!  Writing out evolution operators
+	!*************************************************************
+
+	subroutine write_evolution_operators(prefix,Uelement,Uelement2,res,ims,steps)
+		integer				:: Uelement, Uelement2, steps
+		double precision	:: res(:), ims(:)
+		integer	(i4b)		:: i,j
+		character(len=4)	:: no1,no2
+		character(len=50)	:: name
+		character(len=*)	:: prefix
+
+
+		if(Uelement < 10) then
+			write(no2,'(i1)')	Uelement
+		else if (Uelement < 100) then
+			write(no2,'(i2)')	Uelement
+		else
+			write(no2,'(i3)')	Uelement
+		endif
+		if(Uelement2 < 10) then
+			write(no1,'(i1)')	Uelement2
+		else if (Uelement2 < 100) then
+			write(no1,'(i2)')	Uelement2
+		else
+			write(no1,'(i3)')	Uelement2
+		endif
+
+		name = prefix // trim(no1) // '-'//trim(no2)//'.dat'
+
+		open(UNIT=22, FILE = trim(file_join(out_dir,trim(name))))
+
+		i = 1
+		do while (i <= steps)
+			if (mod(i,gt(1)) == 1) then
+				write(22,*) dt*(i-1),' ',res(i),' ',ims(i)
+			endif
+			i = i + 1
+		end do
+
+		close(UNIT=22)
+	end subroutine write_evolution_operators
+
+
+	!*************************************************************
 	!  Writing out density matrix evolution after delta-excitation
 	!*************************************************************
 
@@ -905,7 +967,7 @@ contains
       	real(dp) 											:: s, x, magnitude
       	complex(dpc)										:: s_c
       	integer 											:: a,b,i,j,k,l,Ublock
-      	complex(dpc), dimension(N1_from_type(type),N2_from_type(type)) 	:: rho0, eig1, eig2
+      	complex(dpc), dimension(N1_from_type(type),N2_from_type(type)) 	:: rho0
       	complex(dpc), dimension(:,:,:), allocatable 						:: rr
      	complex(dpc), dimension(:,:,:,:,:), pointer		:: actual_U
       	character(len=10)	:: cha,chb
@@ -1028,23 +1090,9 @@ contains
 
 		 		write(11,*) (i-1)*dt*gt(1), real(s_c), aimag(s_c)
     	  	end do
-
-    	  	close(11)
-
-    	  	do a = 1, N1_from_type(type)
-    	  		write(cha,'(i1)') a
-	    	  	name = 'dens_E_eigenvalue_'//trim(cha)//'.dat'
-    	  		open(11,file=trim(file_join(out_dir,trim(name))))
-
-      			do i = 1, Nt(1)
-					call spec(rr(:,:,i),eig1,eig2)
-
-			 		write(11,*) (i-1)*dt*gt(1), real(eig2(a,a)), aimag(eig2(a,a))
-    	  		end do
-
-    	  		close(11)
-    	  	end do
 		end if
+
+      	close(11)
 
 
       	deallocate(rr)
@@ -1283,12 +1331,6 @@ contains
 
 			if(submethod2 /= 'u' .and. submethod2 /= 'U' .and. .not. tau_projector_normalization_for_others) then
 				rho_out = 2*rho_out
-			else
-				! normalization to trace 1 for tau = 0
-				call calculate_dipole_excitation('g','O',rho_g,rho_O,.true.)
-				call calculate_dipole_excitation('O','E',rho_O,rho_E,.false.)
-
-				rho_out = rho_out / trace(rho_E)
 			end if
 
 !			if(get_tau_phase) then

@@ -131,6 +131,7 @@ contains
 
   end function factorial
 
+  ! alpha, aalpha are omega/hbar of the oscillators
   real(dp) recursive function franc_condon_factor(v,alpha,vv,aalpha,d) result(res)
   		integer(i4b), intent(in) 	:: v,vv
   		real(dp), intent(in)		:: alpha, aalpha, d
@@ -175,6 +176,12 @@ contains
   		res = sqrt(res)
 
   end function franc_condon_factor
+
+  integer(i4b) function round(r) result(ret)
+  	real(dp), intent(in) :: r
+
+  	ret = INT((r + 0.5))
+  end function
 
 
 end module sci_misc

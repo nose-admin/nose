@@ -6,31 +6,21 @@ module numer_interp
 	
 	private :: get_abcd, tridag, locate
 	
-!	public :: spline, splint, primitive, intsplin
-
-	interface spline
-		module procedure spline_real
-		module procedure spline_cmplx
-		module procedure spline_matrix
-	end interface
-	interface splint
-		module procedure splint_real
-		module procedure splint_cmplx
-	end interface
-
+	public :: spline, splint, primitive, intsplin
+!
 !	interface primitive
 !		module procedure primitive_real
 !		module procedure primitive_cmplx
 !	end interface primitive
-
-
+!
+!
 contains
 
 
     !
     ! Interpolation by spline between two points
     !
-	function splint_real(xa,ya,y2a,x) result(ret)
+	function splint(xa,ya,y2a,x) result(ret)
 		real(dp), dimension(:), intent(in) :: xa,ya,y2a
 		real(dp), intent(in) :: x
 		real(dp) :: ret
@@ -50,12 +40,12 @@ contains
 		ret = a*ya(klo)+b*ya(khi)+((a**3-a)*y2a(klo)+(b**3-b)*y2a(khi))* &
 		 (h**2)/6.0_dp
 	
-	end function splint_real
+	end function splint
 
 	!
 	! Cubic spline interpolation
 	!
-	subroutine spline_real(x,y,yp1,ypn,y2)
+	subroutine spline(x,y,yp1,ypn,y2)
 		real(dp), dimension(:), intent(in)  :: x,y
 		complex(dpc), intent(in)                :: yp1, ypn
 		real(dp), dimension(:), intent(out) :: y2 
@@ -89,7 +79,7 @@ contains
 	
 		call tridag(a(2:n),b(1:n),c(1:n-1),r(1:n),y2(1:n))
 		
-	end subroutine spline_real
+	end subroutine spline
 
 	!
 	! Returns a primitive function to a function y(t)exp(+i*w*t),
@@ -126,7 +116,7 @@ contains
 		der = 0.0_dp
 		if (present(D0)) der = D0
 		
-  		call spline_real(x,y,der,(0.0_dp,0.0_dp),d)
+  		call spline(x,y,der,(0.0_dp,0.0_dp),d)
   
   		m = size(x) - 1
 		n = size(w)
@@ -250,104 +240,6 @@ contains
 		
 	end function
 	
-	!
-	! Cubic spline interpolation - complex
-	!
-	subroutine spline_cmplx(x,y,yp1,ypn,y2)
-		real(dp), dimension(:), intent(in)  :: x
-		complex(dpc), dimension(:), intent(in)  :: y
-		complex(dpc), intent(in)                :: yp1, ypn
-		complex(dp), dimension(:), intent(out) :: y2
-
-		real(dp), dimension(:), allocatable :: re_y, im_y, re_y2, im_y2
-
-		allocate(re_y2( size(y)) )
-		allocate(im_y2( size(y)) )
-
-		call spline_real(x,real(y),yp1,ypn,re_y2)
-		call spline_real(x,aimag(y),yp1,ypn,im_y2)
-
-		y2 = re_y2 + cmplx(0,1)*im_y2
-
-		deallocate(re_y2)
-		deallocate(im_y2)
-
-
-	end subroutine spline_cmplx
-
-	!
-	! Cubic spline interpolation - complex
-	!
-	function splint_cmplx(xa,ya,y2a,x) result(ret)
-		real(dp), dimension(:), intent(in) :: xa
-		complex(dpc), dimension(:), intent(in) :: ya,y2a
-		real(dp), intent(in) :: x
-		complex(dpc) :: ret
-
-		real(dp) :: A, B
-
-		A = splint_real(xa,real(ya),real(y2a),x)
-		B = splint_real(xa,aimag(ya),aimag(y2a),x)
-
-		ret = A + cmplx(0,1)*B
-
-	end function splint_cmplx
-
-	!
-	! Cubic spline interpolation for matrix
-	!
-	subroutine spline_matrix(x,y,yp1,ypn,y2)
-		complex(dpc), dimension(:,:,:), intent(in)  	:: y
-		real(dp), dimension(:), intent(in)  			:: x
-		complex(dpc), intent(in), dimension(:,:)		:: yp1, ypn
-		complex(dpc), dimension(:,:,:), intent(out) :: y2
-
-		integer(i4b) :: i,j
-
-		if(size(y,1) /= size(yp1,1) .or. size(y,2) /= size(yp1,2) .or. &
-			size(y,1) /= size(ypn,1) .or. size(y,2) /= size(ypn,2) .or. size(x) /= size(y,3) .or.&
-			size(y,1) /= size(y2,1) .or. size(y,2) /= size(y2,2) .or. size(y,3) /= size(y2,3) ) then
-
-			call print_error_message(-1,"dimension error in splint_matrix")
-		end if
-
-		do i=1,size(y,1)
-		do j=1,size(y,2)
-
-			call spline(x,y(i,j,:),yp1(i,j),ypn(i,j),y2(i,j,:))
-
-		end do
-		end do
-
-	end subroutine spline_matrix
-
-	!
-	! Cubic spline interpolation for matrix
-	!
-	subroutine splint_matrix(xa,ya,y2a,x,y)
-		complex(dpc), dimension(:,:,:), intent(in) :: ya,y2a
-		real(dp), dimension(:), intent(in) :: xa
-		real(dp), intent(in) :: x
-		complex(dpc), dimension(:,:), intent(out) :: y
-
-		integer(i4b) :: i,j
-
-		if(size(ya,1) /= size(y2a,1) .or. size(ya,2) /= size(y2a,2) .or. size(ya,3) /= size(y2a,3) .or. &
-			size(xa) /= size(ya,3) .or. size(ya,1) /= size(y,1) .or. size(ya,2) /= size(y,2) ) then
-
-			call print_error_message(-1,"dimension error in splint_matrix")
-		end if
-
-		do i=1,size(ya,1)
-		do j=1,size(ya,2)
-
-			y(i,j) = splint_cmplx(xa,ya(i,j,:),y2a(i,j,:),x)
-
-		end do
-		end do
-
-	end subroutine splint_matrix
-
 	
 	
 !***********************

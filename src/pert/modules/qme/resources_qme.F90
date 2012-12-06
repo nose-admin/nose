@@ -44,6 +44,18 @@ module resources_qme
     character          :: submethod1
     character          :: submethod2
 
+!+aurelia
+    integer, dimension(4)      :: Npos       ! associated with input variable excSource
+    character(len=12)          :: locBasis	 ! associated with input variable localBasis
+    character(len=12)          :: doRelax    ! associated with input variable relaxation
+    character(len=12)          :: doSecAp    ! associated with input variable secular
+    character(len=12)          :: pureDephasing ! associated with input variable dephasing
+    real(dp)                   :: Kfin    	 ! associated with input variable feeding 
+    real(dp)                   :: Kdin    	 ! associated with input variable draining
+
+!-aurelia
+
+
 !PGF95    private :: populations, grstate_coherences, remaining_coherences
 
 contains
