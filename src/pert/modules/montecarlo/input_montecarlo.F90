@@ -70,8 +70,6 @@ contains
 		end if
 
 
-		load_evops = .false.
-
         if (index(trim(methodMC), "normal") == 1) then
 
 			depository = .false.
@@ -89,9 +87,6 @@ contains
 			depository = .true.
 			variant360 = .false.
 			modified_unraveling2 = .false.
-
-		else if (index(trim(methodMC), "load_evops") == 1) then
-			load_evops = .true.
 
         else
 

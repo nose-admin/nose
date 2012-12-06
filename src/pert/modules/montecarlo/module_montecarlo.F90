@@ -111,10 +111,6 @@ module module_montecarlo
 		character(len=128)	:: cbuff
 		character :: type
 
-		complex(dpc), dimension(:,:), allocatable :: rho_in
-		real(dp), dimension(:), allocatable :: vector
-
-
 		! qch_lib - hack
 !		call pokus4(4)
 !		call pokus4(6)
@@ -142,10 +138,6 @@ module module_montecarlo
 			write(cbuff, '(A F6.4 A)') "Using debugging Gamma = ",debug_gamma," - result is unphysical"
 			call print_warning_message(cbuff, -1)
 		end if
-		if(vynechani_G_ifu) then
-			write(cbuff, '(A F6.4 A)') "WARNING! FAST_G METHOD CONTAINS SERIOUS ERROR, USE ONLY FOR TESTING!"
-			call print_warning_message(cbuff, -1)
-		end if
 
 		write(cbuff, '(A L)') "G-functions ", g_functions
 		call print_log_message(cbuff, 5)
@@ -161,63 +153,6 @@ module module_montecarlo
 		call print_log_message(cbuff, 5)
 		write(cbuff, '(A L)') "FastG ", vynechani_G_ifu
 		call print_log_message(cbuff, 5)
-
-		if(load_evops) then 			!***************************************************
-
-		!*************************************************************
-		!  Reading evops if possible
-		!*************************************************************
-		if (only_coherences) then
-			if (parallel_id == 0) then
-				ALLOCATE(rho_in, (N1_from_type(type), N2_from_type(type)))
-				ALLOCATE(vector, (Nl*Nl*2+1))
-
-				if(.not. use_exciton_basis) then
-					open(unit=11,file=trim(file_join(out_dir,"Ueg_local.dat")), err=130)
-				else
-					open(unit=11,file=trim(file_join(out_dir,"Ueg_exciton.dat")), err=130)
-				end if
-
-				write(cbuff,'(i3)') Nl*Nl*2+1
-
-				cbuff = '('//trim(cbuff)//'f15.8)' ! forming a descriptor for outputting row by row
-
-				do i = 1, RUNS*STEPS
-
-				  read(11,cbuff, err=110, end=120) vector(:)
-				  write(*,*) vector(:)
-				  write(*,*)
-
-				  do l=1,Nl
-				  do k=1,Nl
-					rho_in(k,1) = vector(1+2*k-1 + 2*Nl*(l-1)) + vector(1+2*k + 2*Nl*(l-1))*cmplx(0,1)
-					write(*,*) rho_in(k,1)
-					write(*,*)
-				  end do
-
-!					if(use_exciton_basis) then
-!						call operator_to_exc(rho_in,'O')
-!					end if
-
-					evops(1,1)%Ueg(l, 1, :, 1, i) = rho_in(:,1)
-
-				  end do
-
-				end do
-
-				goto 100
-
-				130 call print_error_message(-1, "error reading Ueg_local(_exciton).dat")
-				110 close(unit=11) !call print_error_message(-1, "error reading Ueg_local.dat")
-				120 close(unit=11)
-				100 call print_log_message("evops read successfuly",5)
-
-				DEALLOCATE(rho_in)
-				DEALLOCATE(vector)
-			end if
-		end if
-
-		else							!***************************************************
 
 		!*************************************************************
 		! Calculation of evolution superops
@@ -306,8 +241,6 @@ module module_montecarlo
 
 			end do
 		end if
-
-		end if							!***************************************************
 
 
 		!*************************************************************
@@ -521,49 +454,6 @@ module module_montecarlo
 			if (resources_output_contains(NOSE_RDM_B01_CONJG)) then
 				call write_time_evolutions('O',.false.,.true.,rho_out)
 			endif
-
-			call write_evolution_operators('O')
-			call write_redfield_tensor('O')
-		end if
-
-		!*************************************************************
-		!  Outputting evolution operators (mandatory)
-		!*************************************************************
-		if (only_coherences .and. .not. load_evops) then
-			if (parallel_id == 0) then
-
-				if(.not. use_exciton_basis) then
-					open(unit=11,file=trim(file_join(out_dir,"Ueg_local.dat")))
-				else
-					open(unit=11,file=trim(file_join(out_dir,"Ueg_exciton.dat")))
-				end if
-
-				write(buffer,'(i3)') Nl+1
-
-				buffer = '('//trim(buffer)//'f15.8)' ! forming a descriptor for outputting row by row
-
-				do i = 1, RUNS*STEPS
-
-				  write(11,buffer,advance='no') (i-1)*timeStep
-
-				  do l=1,Nl
-				  do k=1,Nl
-
-					rho_out(:,1) = evops(1,1)%Ueg(l, 1, :, 1, i)
-!					if(use_exciton_basis) then
-!						call operator_from_exc(rho_out,'O')
-!					end if
-
-				  	write(11,buffer,advance='no') rho_out(k,1)
-				  end do
-				  end do
-
-				  write(11,buffer)
-
-				end do
-
-				close(unit=11)
-			end if
 		end if
 
 		DEALLOCATE(rho_out)
@@ -888,26 +778,24 @@ module module_montecarlo
 			end do
 			end do
 
-			if(max(1+STEPS*(run-1),1+STEPS*(run-1) + 5) > size(rho_coherent,3)) then
-				call print_error_message(-1,"error 42")
-			end if
-
-			!norm = abs(maxval(abs(rho_coherent(:,1,1+STEPS*(run-1):STEPS*run))))
-			norm = abs(maxval(abs(rho_coherent(:,1,1+STEPS*(run-1):1+STEPS*(run-1) + 5)))) ! do not include the end
+			norm = abs(maxval(abs(rho_coherent(:,1,1+STEPS*(run-1):STEPS*run))))
 			do j=STEPS, 1, -1
 				if(.not. only_coherences) then
 					rho(:,:,j+STEPS*(run-1)) = rho(:,:,j+STEPS*(run-1))/trace(rho(:,:,j+STEPS*(run-1)))
 					rho_coherent(:,:,j+STEPS*(run-1)) = rho_coherent(:,:,j+STEPS*(run-1))/trace(rho_coherent(:,:,j+STEPS*(run-1)))
 				else
 					do jj=1, Nl
-!!!				THERE WAS POSSIBILITY OF NORMALIZATION PROBLEMS
-!						if(abs(rho_init(jj,1)) > 1e-3 .and. abs(rho(jj,1,1+STEPS*(run-1))) > 1e-3) then
-!							rho(jj,1,j+STEPS*(run-1)) = rho(jj,1,j+STEPS*(run-1))/abs(rho_coherent(jj,1,1+STEPS*(run-1))/rho_init(jj,1))
-!							rho_coherent(jj,1,j+STEPS*(run-1)) = rho_coherent(jj,1,j+STEPS*(run-1))/abs(rho_coherent(jj,1,1+STEPS*(run-1))/rho_init(jj,1))
-!						else
+						if(abs(rho_init(jj,1)) > 1e-3 .and. abs(rho(jj,1,1+STEPS*(run-1))) > 1e-3) then
+!							write(*,*) rho(jj,1,1+STEPS*(run-1)),rho_init(jj,1), rho(jj,1,j+STEPS*(run-1))
+							rho(jj,1,j+STEPS*(run-1)) = rho(jj,1,j+STEPS*(run-1))/abs(rho_coherent(jj,1,1+STEPS*(run-1))/rho_init(jj,1))
+							rho_coherent(jj,1,j+STEPS*(run-1)) = rho_coherent(jj,1,j+STEPS*(run-1))/abs(rho_coherent(jj,1,1+STEPS*(run-1))/rho_init(jj,1))
+!							write(*,*) rho(jj,1,j+STEPS*(run-1))
+						else
+!							write(*,*) rho(jj,1,1+STEPS*(run-1)),rho_init(jj,1), rho(jj,1,j+STEPS*(run-1))
 							rho(jj,1,j+STEPS*(run-1)) = rho(jj,1,j+STEPS*(run-1))/norm
 							rho_coherent(jj,1,j+STEPS*(run-1)) = rho_coherent(jj,1,j+STEPS*(run-1))/norm
-!						end if
+!							write(*,*) rho(jj,1,j+STEPS*(run-1))
+						end if
 					end do
 				end if
 			end do
