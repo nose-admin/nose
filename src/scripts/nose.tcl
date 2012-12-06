@@ -455,6 +455,90 @@ namespace eval NOSE_conf {
 		addRecord extended_grid_extent $ll;
 	
 	}	
+#+aurelia
+	#
+	#  excPosition
+	#
+	proc excPosition { st1 st2 st3 st4 } {
+		variable recordList;
+	
+		;# Check that they are integers
+    	checkInteger $st1 excPosition 1
+    	checkInteger $st2 excPosition 2
+    	checkInteger $st3 excPosition 3
+    	checkInteger $st4 excPosition 4
+		
+    	set ll [list v 4 i "$st1 $st2 $st3 $st4"];
+		addRecord excPosition $ll;
+	
+	}
+
+	#
+	#  localBasis
+	#
+	proc localBasis { a } {
+		variable recordList;
+	
+		addStrRecord localBasis $a;
+	
+	}
+
+	#
+	#  relaxation
+	#
+	proc relaxation { a } {
+		variable recordList;
+	
+		addStrRecord relaxation $a;
+	
+	}
+
+
+	#
+	#  secular approximation
+	#
+	proc secular { a } {
+		variable recordList;
+	
+		addStrRecord secular $a;
+	
+	}
+
+	#
+	#  dephasing
+	#
+	proc dephasing { a } {
+		variable recordList;
+	
+		addStrRecord dephasing $a;
+	
+	}
+
+	#
+	#  feeding
+	#
+	proc feeding { a } {
+		variable recordList;
+
+		checkReal $a feeding 1
+		set ll [list m 1 1 r $a];
+		addRecord feeding $ll;
+	
+	}
+
+	#
+	#  draining
+	#
+	proc draining { a } {
+		variable recordList;
+	
+		checkReal $a draining 1
+		set ll [list m 1 1 r $a];
+		addRecord draining $ll;
+	
+	}
+
+#-aurelia
 	#
 	#  parallel
 	#
@@ -836,6 +920,15 @@ namespace eval NOSE_conf {
 	parallel_options "-np 1"
 	
 	moduleMethod PT2-RC
+#+aurelia
+	excPosition       1 4 2 2 
+	localBasis       no
+	relaxation       no
+	secular          yes
+	dephasing        yes
+	feeding           0.
+	draining          0.
+#-aurelia
     
 	set defaults off;
 	##############################################
@@ -874,6 +967,15 @@ namespace eval NOSE_conf {
 	namespace export moduleMethod;
 	namespace export completeResultFile;
 	namespace export parallel_options;
+#+aurelia
+	namespace export excPosition;
+	namespace export localBasis;
+	namespace export relaxation;
+	namespace export secular;
+	namespace export dephasing;
+	namespace export feeding;
+	namespace export draining;
+#-aurelia	
 
 } ;# END namespace NOSE_conf
 
@@ -3344,6 +3446,15 @@ namespace import NOSE_conf::rwa;
 namespace import NOSE_conf::moduleMethod;
 namespace import NOSE_conf::completeResultFile;
 namespace import NOSE_conf::parallel_options;
+#+aurelia
+namespace import NOSE_conf::excPosition;
+namespace import NOSE_conf::localBasis;
+namespace import NOSE_conf::relaxation;
+namespace import NOSE_conf::secular;
+namespace import NOSE_conf::dephasing;
+namespace import NOSE_conf::feeding;
+namespace import NOSE_conf::draining;
+#-aurelia
 
 namespace import NOSE_ssf::BEGIN_SSF;
 namespace import NOSE_ssf::END_SSF;
@@ -3911,6 +4022,15 @@ set meth [NOSE_conf::getRecord moduleMethod];
 
 if { [string compare  $mod "QME"] == 0 } {
 	
+#+aurelia
+	NOSE_conf::putRecord excPosition;
+	NOSE_conf::putRecord localBasis;
+	NOSE_conf::putRecord relaxation;
+	NOSE_conf::putRecord secular;
+	NOSE_conf::putRecord dephasing;
+	NOSE_conf::putRecord feeding;
+	NOSE_conf::putRecord draining;
+#-aurelia
 	NOSE_conf::putRecord moduleMethod;
 	
 	if { [string compare  $meth "PT2-"] >= 0 } {
