@@ -456,17 +456,17 @@ contains
 				sbuff2 = trim(adjustl(char_buff))
 
                 call save_2D_tot(real(spect_2d_ftpe(:,:,i)),trim(file_join(out_dir,"twod_re_tot_T=" &
-                        //trim(sbuff)//"fs.dat_"//trim(sbuff2))))
+                        //trim(sbuff)//"fs.dat_"//trim(sbuff2))),dom,NFFT)
                 call save_2D_tot(aimag(spect_2d_ftpe(:,:,i)),trim(file_join(out_dir,"twod_im_tot_T=" &
-                		//trim(sbuff)//"fs.dat_"//trim(sbuff2))))
+                		//trim(sbuff)//"fs.dat_"//trim(sbuff2))),dom,NFFT)
                 call save_2D_tot(real(spect_2d_esa(:,:,i)),trim(file_join(out_dir,"twod_re_esa_T=" &
-                		//trim(sbuff)//"fs.dat_"//trim(sbuff2))))
+                		//trim(sbuff)//"fs.dat_"//trim(sbuff2))),dom,NFFT)
                 call save_2D_tot(aimag(spect_2d_esa(:,:,i)),trim(file_join(out_dir,"twod_im_esa_T=" &
-                		//trim(sbuff)//"fs.dat_"//trim(sbuff2))))
+                		//trim(sbuff)//"fs.dat_"//trim(sbuff2))),dom,NFFT)
                 call save_2D_tot(real(spect_2d_gs(:,:,i)),trim(file_join(out_dir,"twod_re_gs_T="   &
-                		//trim(sbuff)//"fs.dat_"//trim(sbuff2))))
+                		//trim(sbuff)//"fs.dat_"//trim(sbuff2))),dom,NFFT)
                 call save_2D_tot(aimag(spect_2d_gs(:,:,i)),trim(file_join(out_dir,"twod_im_gs_T="   &
-                		//trim(sbuff)//"fs.dat_"//trim(sbuff2))))
+                		//trim(sbuff)//"fs.dat_"//trim(sbuff2))),dom,NFFT)
                 call save_2D_limits(dom,NFFT,trim(file_join(out_dir,"twod_limits.dat")))
 
 				end do
@@ -570,13 +570,13 @@ contains
 	        Ueg => current_Ueg%Ueg
 
 			do k = 1, N1
-            	polar_1(1) = polar_1(1) + (abs(current_e_block%dd(k))**2)
+            	polar_1(1) = polar_1(1) + (abs(current_e_block%dd(k,1))**2)
             end do
             ! loop over time
             do i = 1, Nt(1)-1
                 ! loop over excited states
                 do k = 1, N1
-                    polar_1(i+1) = polar_1(i+1) + (abs(current_e_block%dd(k))**2)*Ueg(k,i+1)
+                    polar_1(i+1) = polar_1(i+1) + (abs(current_e_block%dd(k,1))**2)*Ueg(k,i+1)
                 end do
             end do
 
@@ -624,7 +624,7 @@ contains
             do i = 1, Nt(1)
                 ! loop over excited states
                 do k = 1, N1
-                    polar_fl(i) = polar_fl(i) + current_e_block%fl_fac(k)*(abs(current_e_block%dd(k))**2)*Ueg(k,i)
+                    polar_fl(i) = polar_fl(i) + current_e_block%fl_fac(k)*(abs(current_e_block%dd(k,1))**2)*Ueg(k,i)
                 end do
             end do
 
@@ -1180,7 +1180,7 @@ contains
 			! normalized initial condition after ultrafast excitation
 			ss = 0.0_dp
 			do k = 1,N1
-				pini(k) = iblocks(1,1)%eblock%dd(k)**2
+				pini(k) = iblocks(1,1)%eblock%dd(k,1)**2
 				ss = ss + pini(k)
 			end do
 			pini = pini/ss

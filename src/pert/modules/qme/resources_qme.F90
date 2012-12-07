@@ -3,6 +3,8 @@ module resources_qme
 
     use resources
     use sci_redfield
+    use nakajima_zwanzig_shared
+    use numer_matrix
 
     implicit none
 
@@ -29,7 +31,7 @@ module resources_qme
     complex, dimension(:), allocatable :: qme_polar_1
     real, dimension(:), allocatable    :: qme_spect_abs
 
-    complex, dimension(:,:), allocatable :: qme_2D_ftpe
+    complex, dimension(:,:,:), allocatable :: qme_2D_ftpe !, qme_2D_esa, qme_2D_gs
 
     logical :: use_module_nakajima_zwanzig, tau_projector_normalization_for_others, &
     			qme_module_already_initiated = .false.
@@ -141,9 +143,17 @@ contains
 
     subroutine prepare_evolution_operators()
 
-        real(dp), dimension(:), pointer :: dr
-        integer :: i,t,k,kk, N2 ! this one to be moved
+        real(dp), dimension(:), pointer :: dr => NULL()
+        integer(i4b) :: i,t,k,kk, N2 ! this one to be moved
         real(dp) :: tt
+
+        integer(i4b) :: VibLevelsTotal, N0vib, N1vib, N2vib
+        character(len=256) :: cbuff
+        integer(i4b), dimension(size(current_s_block%QHO_lvls)) :: v_index
+        real(dp), dimension(:,:), allocatable :: Y, X
+    	real(dp), dimension(:,:), pointer :: dd => NULL(),dd2 => NULL(),J => NULL()
+		real(dp), dimension(:), pointer :: eng => NULL(),en => NULL(),en2 => NULL()
+
 
        ! new scheme of storing evolution operator
         call resources_rewind_blocks()
@@ -152,45 +162,107 @@ contains
 
         i = 1
         do
+        	if(sum(current_s_block%QHO_lvls) == 0) then
 
-            N2 = N1*(N1-1)/2
-            ALLOCATE(evops(i,i)%Ueg,(N1, 1,N1, 1,Nt(1)))
-            ALLOCATE(evops(i,i)%Uee,(N1,N1,N1,N1,Nt(1)))
-            ALLOCATE(evops(i,i)%Ufe,(N2,N1,N2,N1,Nt(1)))
-            ALLOCATE(evops(i,i)%Ugg,(1,1,1,1,Nt(1)))
-            evops(i,i)%Ueg = 0.0_dp
-            evops(i,i)%Uee = 0.0_dp
-            evops(i,i)%Ufe = 0.0_dp
-            evops(i,i)%Ugg = 1.0_dp
+	            N2 = N1*(N1-1)/2
+    	        ALLOCATE(evops(i,i)%Ueg,(N1, 1,N1, 1,Nt(1)))
+        	    ALLOCATE(evops(i,i)%Uee,(N1,N1,N1,N1,Nt(1)))
+            	ALLOCATE(evops(i,i)%Ufe,(N2,N1,N2,N1,Nt(1)))
+	            ALLOCATE(evops(i,i)%Ugg,(1,1,1,1,Nt(1)))
+    	        evops(i,i)%Ueg = 0.0_dp
+        	    evops(i,i)%Uee = 0.0_dp
+            	evops(i,i)%Ufe = 0.0_dp
+	            evops(i,i)%Ugg = 1.0_dp
 
-            dr => current_e_block%dr0
+    	        dr => current_e_block%dr0
 
-			if (.false.) then
-            ! loop over time
-            do t = 1, Nt(1)
+				if (.false.) then
+            	! loop over time
+	            do t = 1, Nt(1)
 
-                tt = (t-1)*gt(1)*dt
+    	            tt = (t-1)*gt(1)*dt
 
-                do k = 1, N1
+        	        do k = 1, N1
 
-                    !kk = k + (k-1)*N1
-                    kk = k
+            	        !kk = k + (k-1)*N1
+                	    kk = k
 
-                    evops(i,i)%Ueg(k,1,k,1,t) = exp(-gg(kk,t)-(0.0_dp,1.0_dp)*(en(k)-rwa)*tt - dr0(k)*tt)
-                    !fUeg(k,t) = exp(-conjg(gg(kk,t))-(0.0_dp,1.0_dp)*(en(k)-rwa-2.0_dp*ll(k))*tt - dr0(k)*tt)
+                    	evops(i,i)%Ueg(k,1,k,1,t) = exp(-gg(kk,t)-(0.0_dp,1.0_dp)*(en(k)-rwa)*tt - dr0(k)*tt)
+	                    !fUeg(k,t) = exp(-conjg(gg(kk,t))-(0.0_dp,1.0_dp)*(en(k)-rwa-2.0_dp*ll(k))*tt - dr0(k)*tt)
 
-                end do
+    	            end do
 
-            end do
+        	    end do
+				end if
+
+
+	            if (.not.resources_have_next_block()) exit
+    	        i = i + 1
+
+        	    call resources_next_block()
+            	call resources_set_all_pointers(RESOURCES_EXCITON_REP)
+
+			else ! there are vibrational levels
+				VibLevelsTotal = sum(current_s_block%QHO_lvls)
+				N2 = N1*(N1-1)/2
+				N0vib = product(current_s_block%QHO_lvls)
+				N1vib = N0vib*N1
+				N2vib = N0vib*N1*(N1-1)/2
+
+				call print_log_message("allocating vibrational levels",5)
+				write(*,*) 'block sizes',N0vib,N1vib,N2vib,Nt(1)
+
+!    	        ALLOCATE(evops(i,i)%Ueg,(N1vib, N0vib,N1vib, N0vib,Nt(1)))
+ !       	    ALLOCATE(evops(i,i)%Uee,(N1vib,N1vib,N1vib,N1vib,Nt(1)))
+  !          	ALLOCATE(evops(i,i)%Ufe,(N2vib,N1vib,N2vib,N1vib,Nt(1)))
+	!            ALLOCATE(evops(i,i)%Ugg,(N0vib,N0vib,N0vib,N0vib,Nt(1)))
+    	        ALLOCATE(evops(i,i)%Ueg,(N1, 1,N1, 1,Nt(1)))
+        	    ALLOCATE(evops(i,i)%Uee,(N1,N1,N1,N1,Nt(1)))
+            	ALLOCATE(evops(i,i)%Ufe,(N2,N1,N2,N1,Nt(1)))
+	            ALLOCATE(evops(i,i)%Ugg,(1,1,1,1,Nt(1)))
+
+    	        evops(i,i)%Ueg = 0.0_dp
+        	    evops(i,i)%Uee = 0.0_dp
+            	evops(i,i)%Ufe = 0.0_dp
+	            evops(i,i)%Ugg = 0.0_dp
+
+!	            write(*,*) current_s_block%dd
+!	            write(*,*)
+!	            write(*,*) current_s_block%en
+!	            write(*,*)
+!	            write(*,*) current_s_block%J
+!	            write(*,*)
+!
+!				do i=1,N0vib
+!					v_index = from_vibrational_multiindex(i)
+!					write(*,*) v_index
+!				end do
+
+!				ALLOCATE(Y,(N0vib*N1_from_type('O'),N0vib*N2_from_type('O')))
+!				ALLOCATE(X,(N1_from_type('O'),N2_from_type('O')))
+!				Y = 42.0_dp
+!				X = 0.0
+!				X(1,1) = 1
+!				call add_vibrational_DOF(X,Y,'O')
+!				write(*,*) Y
+!				write(*,*)
+!				call flush()
+!				write(*,*) trace(Y)
+!				call flush()
+!				DEALLOCATE(Y)
+!				DEALLOCATE(X)
+!				stop
+
+				call prepare_very_specific_site_ops()
+
+    	        dr => current_e_block%dr0
+
+	            if (.not.resources_have_next_block()) exit
+    	        i = i + 1
+
+        	    call resources_next_block()
+            	call resources_set_all_pointers(RESOURCES_EXCITON_REP)
 			end if
-
-
-            if (.not.resources_have_next_block()) exit
-            i = i + 1
-
-            call resources_next_block()
-            call resources_set_all_pointers(RESOURCES_EXCITON_REP)
-
 
 
         end do

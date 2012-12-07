@@ -24,12 +24,12 @@ module goft
     character(len=32), parameter :: MT_51 = "RENGER_BCHL"
 
     type pag
-        complex(dpc), dimension(:), pointer :: gg
+        complex(dpc), dimension(:), pointer :: gg => NULL()
     end type
 
-    type(pag), dimension(:), pointer :: all_goft
-    type(pag), dimension(:), pointer :: all_coft
-    type(pag), dimension(:), pointer :: all_hoft
+    type(pag), dimension(:), pointer :: all_goft => NULL()
+    type(pag), dimension(:), pointer :: all_coft => NULL()
+    type(pag), dimension(:), pointer :: all_hoft => NULL()
 
     !private :: pag, all_goft, all_coft
     private::brownian_general
@@ -345,9 +345,9 @@ contains
         ll = 0.0_dp
 
         if (.not.associated(ggt)) then
-            allocate(ggt(grid_Nt))
-            allocate(cct(grid_Nt))
-            allocate(hht(grid_Nt))
+            ALLOCATE(ggt,(grid_Nt))
+            ALLOCATE(cct,(grid_Nt))
+            ALLOCATE(hht,(grid_Nt))
             ggt = 0.0_dp
             cct = 0.0_dp
             hht = 0.0_dp
@@ -401,7 +401,7 @@ contains
         ! local
         integer :: i
         character(len=10) :: cbuff
-        complex(dpc), dimension(:), pointer :: gg
+        complex(dpc), dimension(:), pointer :: gg => NULL()
 
         gg => goft%gt
 
@@ -425,7 +425,7 @@ contains
         ! local
         integer :: i
         character(len=10) :: cbuff
-        complex(dpc), dimension(:), pointer :: gg
+        complex(dpc), dimension(:), pointer :: gg => NULL()
 
         gg => goft%ht
 
@@ -449,7 +449,7 @@ contains
         ! local
         integer :: i
         character(len=10) :: cbuff
-        complex(dpc), dimension(:), pointer :: gg
+        complex(dpc), dimension(:), pointer :: gg => NULL()
 
         gg => goft%ct
 

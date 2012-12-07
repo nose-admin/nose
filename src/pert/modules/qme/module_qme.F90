@@ -1,3 +1,4 @@
+#include "util_allocation.h"
 !
 !
 !
@@ -24,13 +25,13 @@ module module_qme
 	logical  :: have_populations, have_coherences, have_polar_1, have_pop_coh, &
 
 				 have_2d_ftpe, have_1to2ex_coh, qme_polar_1_collected
-	integer  :: NFFT, padfac
+	integer(i4b)  :: NFFT, padfac
 	integer, parameter :: NFFT_basic = 1024
-	real(dp) :: dom
+	real(dp), private :: dom, rmx
+
 
 
 	! privates
-	private :: dom
 
 
 contains
@@ -40,7 +41,7 @@ contains
 	subroutine do_qme_work(err)
 		integer, intent(out) :: err
 
-		integer :: i
+		integer(i4b) :: i
 
 		have_populations = .false.
 		have_coherences = .false.
@@ -338,18 +339,19 @@ contains
 	! Calculation of the first order polarization
 	!
 	subroutine create_polar_1()
-		integer(i4b) :: i,j,k,b, mi,ni
-		integer :: kk, kb
+		integer(i4b) :: i,j,k,b, mi,ni, mii, nii, jj, kk
 		! this will be a local pointer to the global transition dipole moments
-		real(dp), dimension(:), pointer :: dd, dx,dy,dz
+		real(dp), dimension(:,:), pointer :: dd, dx,dy,dz
 		! orientation averaging factors
-		real(dp), dimension(:,:), allocatable :: as_orfact
+		real(dp), dimension(:,:,:,:), allocatable :: as_orfact
 		real(dp) :: vdni, vdmi
 
 		if (.not.allocated(qme_polar_1)) then
-			allocate(qme_polar_1(1:Nt(1)))
+			ALLOCATE(qme_polar_1,(1:Nt(1)))
 			qme_polar_1 = 0.0_dp
 		end if
+
+		write(*,*) 'creating polar'
 
 		if (.not.have_coherences) then
 
@@ -358,43 +360,40 @@ contains
 
 		end if
 
-		call resources_rewind_blocks()
-
-		! loop over blocks
-		kk = 0
-		kb = 1
-		do
-
 			if (use_twoexcitons) then
 
-				dx => current_e_block%dx
-		   		dy => current_e_block%dy
-				dz => current_e_block%dz
+				dx => iblocks(1,1)%eblock%dx
+		   		dy => iblocks(1,1)%eblock%dy
+				dz => iblocks(1,1)%eblock%dz
 
 			else
 
-				dx => current_s_block%dx
-				dy => current_s_block%dy
-				dz => current_s_block%dz
+				dx => iblocks(1,1)%sblock%dx
+				dy => iblocks(1,1)%sblock%dy
+				dz => iblocks(1,1)%sblock%dz
 
 			end if
 
 
 			! this just temporary, it will be put somewhere else
-			allocate(as_orfact(N1,N1))
+			ALLOCATE(as_orfact,(size(dx,1),size(dx,2),size(dx,1),size(dx,2)))
 
-			do ni = 1,N1
-				do mi = 1,N1
-					vdmi = sqrt(dx(mi)*dx(mi) + dy(mi)*dy(mi) + dz(mi)*dz(mi))
-					vdni = sqrt(dx(ni)*dx(ni) + dy(ni)*dy(ni) + dz(ni)*dz(ni))
+			do ni = 1,size(dx,1)
+			do nii = 1,size(dx,2)
+				do mi = 1,size(dx,1)
+				do mii = 1,size(dx,2)
+					vdmi = sqrt(dx(mi,mii)*dx(mi,mii) + dy(mi,mii)*dy(mi,mii) + dz(mi,mii)*dz(mi,mii))
+					vdni = sqrt(dx(ni,nii)*dx(ni,nii) + dy(ni,nii)*dy(ni,nii) + dz(ni,nii)*dz(ni,nii))
 					if ((vdmi==0.0_dp).or.(vdni==0.0_dp)) then
-					  as_orfact(ni,mi) = 0.0_dp
+					  as_orfact(ni,nii,mi,mii) = 0.0_dp
 					else
-					  as_orfact(ni,mi) = (1.0_dp/3.0_dp)* &
-						(dx(ni)*dx(mi) + dy(ni)*dy(mi) + dz(ni)*dz(mi))/ &
+					  as_orfact(ni,nii,mi,mii) = (1.0_dp/3.0_dp)* &
+						(dx(ni,nii)*dx(mi,mii) + dy(ni,nii)*dy(mi,mii) + dz(ni,nii)*dz(mi,mii))/ &
 						(vdni*vdmi)
 					end if
 				end do
+				end do
+			end do
 			end do
 
 
@@ -409,14 +408,11 @@ contains
 !			   dd(i) = e(1)*dx(i) + e(2)*dy(i) + e(3)*dz(i)
 !			end do
 
-			! 4-mer test --- --- ---
-			!write(*,*) '---> dd=', dd
-			! 4-mer test --- --- ---
-
 			! loop over time
 			do i = 1, Nt(1)
 				! loop over excited states
-				do k = 1, N1
+				do k = 1, size(dx,1)
+				do kk = 1, size(dx,2)
 ! this will work only in secular approximation, because only then all coherences
 ! start and end as the same ones. Otherwise they can transfer and we need to have
 ! and information about that. The information is given by evolution operator.
@@ -425,34 +421,19 @@ contains
 ! This how the full implementation should look like
 ! we need to implement the as_orfacts and Ueg
 !
-					do j = 1, N1
-						qme_polar_1(i) = qme_polar_1(i) + (dd(k)*dd(j))*as_orfact(k,j)*evops(kb,kb)%Ueg(k,1,j,1,i) !gcohs%C(i,k+kk)
-
-						! 4-mer test --- --- ---
-						!write(*,*) '---> +++=', (dd(k)*dd(j))*as_orfact(k,j)*evops(kb,kb)%Ueg(k,1,j,1,i)
-						!write(*,*) '---> +++=dddd  =', (dd(k)*dd(j))
-						!write(*,*) '---> +++=orfact=', as_orfact(k,j)
-						!write(*,*) '---> +++=evops =', evops(kb,kb)%Ueg(k,1,j,1,i)
-						!write(*,*) '---> +++=kb	=', kb,' ',j,' ',k, ' ', i
-						! 4-mer test --- --- ---
+					do j = 1, size(dx,1)
+					do jj = 1, size(dx,2)
+						qme_polar_1(i) = qme_polar_1(i) + (dd(k,kk)*dd(j,jj))*as_orfact(k,kk,j,jj)*evops(1,1)%Ueg(k,kk,j,jj,i)*rho0_gg_element(kk,jj)
 
 						!print *, "---> ", qme_polar_1(i), dd(k), dd(j), as_orfact(k,j), evops(kb,kb)%Ueg(k,1,j,1,i)
 					end do
+					end do
+				end do
 				end do
 			end do
 
-! no deallocation
-!			deallocate(dd)
-			deallocate(as_orfact)
+			DEALLOCATE(as_orfact)
 
-			if (.not.resources_have_next_block()) exit
-
-			kk = kk + N1
-			kb = kb + 1
-			call resources_next_block()
-
-
-		end do
 
 	end subroutine create_polar_1
 
@@ -478,7 +459,11 @@ contains
 	!  Calculates 2D spectrum
 	!
 	subroutine create_2D_spec()
+		integer(i4b) :: kk, fs
 
+		character(len = 40) 	:: buffer
+		character(len = 300)	:: name
+		character(len = 80) 	:: caption_line ! with intention of proceding output data with Origin
 
 		!if (parallel_id == 0) then
 			if (.not.have_coherences) then
@@ -496,16 +481,91 @@ contains
 				have_1to2ex_coh = .true.
 			end if
 
+			! loop over population time
+			do kk = 1, Nt(2)
+
+			use_Uee_index = kk
+
 			call init_twod()
 			if (.not.allocated(qme_2d_ftpe)) then
-				allocate(qme_2d_ftpe(size(SR0,1),size(SR0,2)))
-				qme_2d_ftpe = 0.0_dp
-			 end if
+				!ALLOCATE(qme_2d_ftpe,(size(SR0,1),size(SR0,2),Nt(2)))
+				!ALLOCATE(qme_2d_esa,(size(SR0,1),size(SR0,2),Nt(2)))
+				!ALLOCATE(qme_2d_gs,(size(SR0,1),size(SR0,2),Nt(2)))
 
-			qme_2d_ftpe = qme_2d_ftpe + SR0
-			qme_2d_ftpe = qme_2d_ftpe + SNR0
+				ALLOCATE(qme_2d_ftpe,(size(SR0,1),size(SR0,2),1))
+				!ALLOCATE(qme_2d_esa,(size(SR0,1),size(SR0,2),1))
+				!ALLOCATE(qme_2d_gs,(size(SR0,1),size(SR0,2),1))
+				qme_2d_ftpe = 0.0_dp
+				!qme_2d_esa = 0.0_dp
+				!qme_2d_gs = 0.0_dp
+			end if
+
+			write(*,*) 'pruchod pri kk',kk
+
+			qme_2d_ftpe = 0.0_dp
+			!qme_2d_esa = 0.0_dp
+			!qme_2d_gs = 0.0_dp
+
+			!qme_2d_gs(:,:,1) = qme_2d_gs(:,:,1) + SR0 + SNR0
+			!qme_2d_esa(:,:,1) = qme_2d_esa(:,:,1) + ESAR + ESAN
+			!qme_2d_ftpe(:,:,1) = qme_2d_gs(:,:,1) + qme_2d_esa(:,:,1)
+
+			fs = (kk-1)*gt(2)*dt
+			if (fs < 10) then
+				write(buffer,'(i1)') fs
+			elseif (fs < 100) then
+				write(buffer,'(i2)') fs
+			elseif (fs < 1000) then
+				write(buffer,'(i3)') fs
+			else
+				write(buffer,'(i4)') fs
+			endif
+
+			NFFT = size(SR0,1)
+			dom = 2.0_dp*PI_D/(NFFT*gt(1)*dt)
+
+			qme_2d_ftpe(:,:,1) = SR0 + SNR0 + ESAR + ESAN
+			name = trim('twod_re_tot_T=')//trim(buffer)//trim('fs.dat')
+			call save_2D_tot(real(qme_2d_ftpe(:,:,1)),trim(file_join(out_dir,name)),dom,NFFT,10000.0_dp,25000.0_dp)
+			!name = trim('twod_im_tot_T=')//trim(buffer)//trim('fs.dat')
+			!call save_2D_tot(aimag(qme_2d_ftpe(:,:,1)),trim(file_join(out_dir,name)),dom,NFFT)
+
+			qme_2d_ftpe(:,:,1) = ESAR + ESAN
+			name = trim('twod_re_esa_T=')//trim(buffer)//trim('fs.dat')
+			call save_2D_tot(real(qme_2d_ftpe(:,:,1)),trim(file_join(out_dir,name)),dom,NFFT,10000.0_dp,25000.0_dp)
+
+			qme_2d_ftpe(:,:,1) = ESAR
+			name = trim('twod_re_esar_T=')//trim(buffer)//trim('fs.dat')
+			call save_2D_tot(real(qme_2d_ftpe(:,:,1)),trim(file_join(out_dir,name)),dom,NFFT,10000.0_dp,25000.0_dp)
+
+			qme_2d_ftpe(:,:,1) = ESAN
+			name = trim('twod_re_esan_T=')//trim(buffer)//trim('fs.dat')
+			call save_2D_tot(real(qme_2d_ftpe(:,:,1)),trim(file_join(out_dir,name)),dom,NFFT,10000.0_dp,25000.0_dp)
+
+			qme_2d_ftpe(:,:,1) = SSR1
+			name = trim('twod_re_r1_T=')//trim(buffer)//trim('fs.dat')
+			call save_2D_tot(real(qme_2d_ftpe(:,:,1)),trim(file_join(out_dir,name)),dom,NFFT,10000.0_dp,25000.0_dp)
+
+			qme_2d_ftpe(:,:,1) = SSR2
+			name = trim('twod_re_r2_T=')//trim(buffer)//trim('fs.dat')
+			call save_2D_tot(real(qme_2d_ftpe(:,:,1)),trim(file_join(out_dir,name)),dom,NFFT,10000.0_dp,25000.0_dp)
+
+			qme_2d_ftpe(:,:,1) = SR0 - SSR2
+			name = trim('twod_re_r3_T=')//trim(buffer)//trim('fs.dat')
+			call save_2D_tot(real(qme_2d_ftpe(:,:,1)),trim(file_join(out_dir,name)),dom,NFFT,10000.0_dp,25000.0_dp)
+
+			qme_2d_ftpe(:,:,1) = SNR0 - SSR1
+			name = trim('twod_re_r4_T=')//trim(buffer)//trim('fs.dat')
+			call save_2D_tot(real(qme_2d_ftpe(:,:,1)),trim(file_join(out_dir,name)),dom,NFFT,10000.0_dp,25000.0_dp)
+
+
+
+			call save_2D_limits(dom,NFFT,trim(file_join(out_dir,"twod_limits.dat")),10000.0_dp,25000.0_dp)
+
 
 			call clean_twod()
+
+			end do
 
 		!end if
 
@@ -530,10 +590,14 @@ contains
 		!call print_log_message(trim(buff),5)
 
 		!qme_2d_ftpe = qme_2d_ftpe/N_realizations_local
-		call parallel_average_complex_array2(qme_2d_ftpe,N)
 
-		write(buff,'(a,i5,a)') "2d_ftpe  : Total of ",N," realization(s) received"
-		call print_log_message(trim(buff),5)
+		!!! --- paralelization
+		!call parallel_average_complex_array3(qme_2d_ftpe,N)
+		!call parallel_average_complex_array3(qme_2d_gs,N)
+		!call parallel_average_complex_array3(qme_2d_esa,N)
+
+		!write(buff,'(a,i5,a)') "2d_ftpe  : Total of ",N," realization(s) received"
+		!call print_log_message(trim(buff),5)
 
 	end subroutine collect_2D_spec
 
@@ -557,7 +621,7 @@ contains
 	subroutine collect_qme_data(err)
 		integer, intent(out) :: err
 
-		integer :: k,i, fs
+		integer(i4b) :: k,i,kk, fs
 		real(dp) :: oma
 
 		character(len = 20) 	:: buffer
@@ -718,35 +782,57 @@ contains
 		!*************************************************************
 		!  Outputting 2D spectra
 		!*************************************************************
-		if (resources_output_contains("2d_ftpe")) then
 
-			call collect_2D_spec()
-
-			if (parallel_id == 0) then
-
-				fs = gt(2)*dt
-				if (fs < 10) then
-					write(buffer,'(i1)') fs
-				elseif (fs < 100) then
-					write(buffer,'(i2)') fs
-				elseif (fs < 1000) then
-					write(buffer,'(i3)') fs
-				else
-					write(buffer,'(i4)') fs
-				endif
-
-
-				name = trim('twod_re_tot_T=')//trim(buffer)//trim('fs.dat')
-				call save_2D_tot(real(qme_2d_ftpe),trim(file_join(out_dir,name)))
-				name = trim('twod_im_tot_T=')//trim(buffer)//trim('fs.dat')
-				call save_2D_tot(aimag(qme_2d_ftpe),trim(file_join(out_dir,name)))
-
-                ! temporarily outputing limits from here
-                call save_2D_limits(dom,NFFT,trim(file_join(out_dir,"limits.dat")))
-
-            end if
-
-		end if
+		!!! --- paralelization
+!		if (resources_output_contains("2d_ftpe")) then
+!
+!			call collect_2D_spec()
+!
+!			rmx = abs(maxval(real(qme_2d_ftpe(:,:,1))))
+!            qme_2d_ftpe = qme_2d_ftpe/rmx
+!            qme_2d_esa = qme_2d_esa/rmx
+!			qme_2d_gs = qme_2d_gs/rmx
+!
+!			if (parallel_id == 0) then
+!
+!				do kk = 1, Nt(2)
+!
+!				fs = (kk-1)*gt(2)*dt
+!				if (fs < 10) then
+!					write(buffer,'(i1)') fs
+!				elseif (fs < 100) then
+!					write(buffer,'(i2)') fs
+!				elseif (fs < 1000) then
+!					write(buffer,'(i3)') fs
+!				else
+!					write(buffer,'(i4)') fs
+!				endif
+!
+!
+!				name = trim('twod_re_tot_T=')//trim(buffer)//trim('fs.dat')
+!				call save_2D_tot(real(qme_2d_ftpe(:,:,kk)),trim(file_join(out_dir,name)),dom,NFFT)
+!				name = trim('twod_im_tot_T=')//trim(buffer)//trim('fs.dat')
+!				call save_2D_tot(aimag(qme_2d_ftpe(:,:,kk)),trim(file_join(out_dir,name)),dom,NFFT)
+!
+!				name = trim('twod_re_esa_T=')//trim(buffer)//trim('fs.dat')
+!				call save_2D_tot(real(qme_2d_esa(:,:,kk)),trim(file_join(out_dir,name)),dom,NFFT)
+!				name = trim('twod_im_esa_T=')//trim(buffer)//trim('fs.dat')
+!				call save_2D_tot(aimag(qme_2d_esa(:,:,kk)),trim(file_join(out_dir,name)),dom,NFFT)
+!
+!				name = trim('twod_re_gs_T=')//trim(buffer)//trim('fs.dat')
+!				call save_2D_tot(real(qme_2d_gs(:,:,kk)),trim(file_join(out_dir,name)),dom,NFFT)
+!				name = trim('twod_im_gs_T=')//trim(buffer)//trim('fs.dat')
+!				call save_2D_tot(aimag(qme_2d_gs(:,:,kk)),trim(file_join(out_dir,name)),dom,NFFT)
+!
+!
+!                ! temporarily outputing limits from here
+!                call save_2D_limits(dom,NFFT,trim(file_join(out_dir,"twod_limits.dat")))
+!
+!                end do
+!
+!            end if
+!
+!		end if
 
 		!*************************************************************
 		!  Outputting 1- to 2- exciton coherences
@@ -793,11 +879,11 @@ contains
 		padfac = 4
 		NFFT = (2**padfac)*NFFT_basic
 
-		allocate(sig(NFFT))
-		allocate(dat(1,NFFT))
-		allocate(rs(NFFT))
+		ALLOCATE(sig,(NFFT))
+		ALLOCATE(dat,(1,NFFT))
+		ALLOCATE(rs,(NFFT))
 		if(.not. allocated(qme_spect_abs)) then
-			allocate(qme_spect_abs(NFFT))
+			ALLOCATE(qme_spect_abs,(NFFT))
 		end if
 		rs			= 0.0_dp
 		qme_spect_abs = 0.0_dp
@@ -842,9 +928,9 @@ contains
 		qme_spect_abs = rs !/rr
 		qme_spect_abs = qme_spect_abs * (gt(1)*dt)
 
-		deallocate(sig)
-		deallocate(dat)
-		deallocate(rs)
+		DEALLOCATE(sig)
+		DEALLOCATE(dat)
+		DEALLOCATE(rs)
 
 	end subroutine create_spect_abs
 
@@ -855,17 +941,24 @@ contains
 
 		!call debug()
 
-		!call read_data(1,N1,1, N1, 'O', submethod1, Nt(1)*gt(1))
-		call fill_evolution_superoperator_nakajima_zwanzig('O',submethod1)
-		if (resources_output_contains(NOSE_RDM_B01)) then
-			call write_time_evolutions('O',.false.,.false.)
-		endif
-		if (resources_output_contains(NOSE_RDM_B01_ABS)) then
-			call write_time_evolutions('O',.true.,.false.)
-		endif
-		if (resources_output_contains(NOSE_RDM_B01_CONJG)) then
-			call write_time_evolutions('O',.false.,.true.)
-		endif
+		if(sum(current_s_block%QHO_lvls) == 0) then
+			!call read_data(1,N1,1, N1, 'O', submethod1, Nt(1)*gt(1))
+			call fill_evolution_superoperator_nakajima_zwanzig('O',submethod1)
+			if (resources_output_contains(NOSE_RDM_B01)) then
+				call write_time_evolutions('O',.false.,.false.)
+			endif
+			if (resources_output_contains(NOSE_RDM_B01_ABS)) then
+				call write_time_evolutions('O',.true.,.false.)
+			endif
+			if (resources_output_contains(NOSE_RDM_B01_CONJG)) then
+				call write_time_evolutions('O',.false.,.true.)
+			endif
+			call write_evolution_operators('O')
+			call write_redfield_tensor('O')
+		else
+			call print_log_message("    calculation of vibrations",5)
+		end if
+
 
 	end subroutine read_coherences
 
@@ -873,17 +966,21 @@ contains
 		integer(i4b) :: k, N2
 		call print_log_message("Reading populations-coherences",5)
 
-		!call read_data(1,N1*N1,1, N1*N1, 'E', submethod2, Nt(1)*gt(1))
-		call fill_evolution_superoperator_nakajima_zwanzig('E',submethod2)
-		if (resources_output_contains(NOSE_RDM_B11)) then
-			call write_time_evolutions('E',.false.,.false.)
-		endif
-		if (resources_output_contains(NOSE_RDM_B11_ABS)) then
-			call write_time_evolutions('E',.true.,.false.)
-		endif
-		if (resources_output_contains(NOSE_RDM_B11_CONJG)) then
-			call write_time_evolutions('E',.false.,.true.)
-		endif
+		if(sum(current_s_block%QHO_lvls) == 0) then
+			!call read_data(1,N1*N1,1, N1*N1, 'E', submethod2, Nt(1)*gt(1))
+			call fill_evolution_superoperator_nakajima_zwanzig('E',submethod2)
+			if (resources_output_contains(NOSE_RDM_B11)) then
+				call write_time_evolutions('E',.false.,.false.)
+			endif
+			if (resources_output_contains(NOSE_RDM_B11_ABS)) then
+				call write_time_evolutions('E',.true.,.false.)
+			endif
+			if (resources_output_contains(NOSE_RDM_B11_CONJG)) then
+				call write_time_evolutions('E',.false.,.true.)
+			endif
+		else
+			call print_log_message("    calculation of vibrations",5)
+		end if
 
 	end subroutine read_pop_coh
 
@@ -892,63 +989,23 @@ contains
 		k = 1
 		call print_log_message("Reading 1-2 coherences",5)
 
-		!call read_data(1,N1*N1*(N1-1)/2,1, N1*N1*(N1-1)/2, '2', submethod1, Nt(1)*gt(1))
-		call fill_evolution_superoperator_nakajima_zwanzig('2',submethod1)
-		if (resources_output_contains(NOSE_RDM_B12)) then
-			call write_time_evolutions('2',.false.,.false.)
-		endif
-		if (resources_output_contains(NOSE_RDM_B12_ABS)) then
-			call write_time_evolutions('2',.true.,.false.)
-		endif
-		if (resources_output_contains(NOSE_RDM_B12_CONJG)) then
-			call write_time_evolutions('2',.false.,.true.)
-		endif
+		if(sum(current_s_block%QHO_lvls) == 0) then
+			!call read_data(1,N1*N1*(N1-1)/2,1, N1*N1*(N1-1)/2, '2', submethod1, Nt(1)*gt(1))
+			call fill_evolution_superoperator_nakajima_zwanzig('2',submethod1)
+			if (resources_output_contains(NOSE_RDM_B12)) then
+				call write_time_evolutions('2',.false.,.false.)
+			endif
+			if (resources_output_contains(NOSE_RDM_B12_ABS)) then
+				call write_time_evolutions('2',.true.,.false.)
+			endif
+			if (resources_output_contains(NOSE_RDM_B12_CONJG)) then
+				call write_time_evolutions('2',.false.,.true.)
+			endif
+		else
+			call print_log_message("    calculation of vibrations",5)
+		end if
 
 	end subroutine read_fe_coh
-
-
-	!*************************************************************
-	!  Writing out evolution operators
-	!*************************************************************
-
-	subroutine write_evolution_operators(prefix,Uelement,Uelement2,res,ims,steps)
-		integer				:: Uelement, Uelement2, steps
-		double precision	:: res(:), ims(:)
-		integer	(i4b)		:: i,j
-		character(len=4)	:: no1,no2
-		character(len=50)	:: name
-		character(len=*)	:: prefix
-
-
-		if(Uelement < 10) then
-			write(no2,'(i1)')	Uelement
-		else if (Uelement < 100) then
-			write(no2,'(i2)')	Uelement
-		else
-			write(no2,'(i3)')	Uelement
-		endif
-		if(Uelement2 < 10) then
-			write(no1,'(i1)')	Uelement2
-		else if (Uelement2 < 100) then
-			write(no1,'(i2)')	Uelement2
-		else
-			write(no1,'(i3)')	Uelement2
-		endif
-
-		name = prefix // trim(no1) // '-'//trim(no2)//'.dat'
-
-		open(UNIT=22, FILE = trim(file_join(out_dir,trim(name))))
-
-		i = 1
-		do while (i <= steps)
-			if (mod(i,gt(1)) == 1) then
-				write(22,*) dt*(i-1),' ',res(i),' ',ims(i)
-			endif
-			i = i + 1
-		end do
-
-		close(UNIT=22)
-	end subroutine write_evolution_operators
 
 
 	!*************************************************************
@@ -967,7 +1024,7 @@ contains
       	real(dp) 											:: s, x, magnitude
       	complex(dpc)										:: s_c
       	integer 											:: a,b,i,j,k,l,Ublock
-      	complex(dpc), dimension(N1_from_type(type),N2_from_type(type)) 	:: rho0
+      	complex(dpc), dimension(N1_from_type(type),N2_from_type(type)) 	:: rho0, eig1, eig2
       	complex(dpc), dimension(:,:,:), allocatable 						:: rr
      	complex(dpc), dimension(:,:,:,:,:), pointer		:: actual_U
       	character(len=10)	:: cha,chb
@@ -1006,7 +1063,7 @@ contains
 
 		Ublock = 1
 
-		allocate(rr(N1_from_type(type),N2_from_type(type),Nt(1)))
+		ALLOCATE(rr,(N1_from_type(type),N2_from_type(type),Nt(1)))
       	rr = 0.0d0
 
 		! We set indices range according to block we evaluate. Because rho0 is
@@ -1090,12 +1147,26 @@ contains
 
 		 		write(11,*) (i-1)*dt*gt(1), real(s_c), aimag(s_c)
     	  	end do
+
+    	  	close(11)
+
+    	  	do a = 1, N1_from_type(type)
+    	  		write(cha,'(i1)') a
+	    	  	name = 'dens_E_eigenvalue_'//trim(cha)//'.dat'
+    	  		open(11,file=trim(file_join(out_dir,trim(name))))
+
+      			do i = 1, Nt(1)
+					call spec(rr(:,:,i),eig1,eig2)
+
+			 		write(11,*) (i-1)*dt*gt(1), real(eig2(a,a)), aimag(eig2(a,a))
+    	  		end do
+
+    	  		close(11)
+    	  	end do
 		end if
 
-      	close(11)
 
-
-      	deallocate(rr)
+      	DEALLOCATE(rr)
 
 	end subroutine write_time_evolutions
 
@@ -1292,6 +1363,7 @@ contains
 
 		complex(dpc), dimension(N1_from_type('O'),N2_from_type('O')) :: rho_O
 		complex(dpc), dimension(N1_from_type('E'),N2_from_type('E')) :: rho_E
+		complex(dpc), dimension(N1_from_type('2'),N2_from_type('2')) :: rho_2
 		complex(dpc), dimension(N1_from_type('g'),N2_from_type('g')) :: rho_g
 
 		integer :: i,j
@@ -1331,6 +1403,12 @@ contains
 
 			if(submethod2 /= 'u' .and. submethod2 /= 'U' .and. .not. tau_projector_normalization_for_others) then
 				rho_out = 2*rho_out
+			else
+				! normalization to trace 1 for tau = 0
+				call calculate_dipole_excitation('g','O',rho_g,rho_O,.true.)
+				call calculate_dipole_excitation('O','E',rho_O,rho_E,.false.)
+
+				rho_out = rho_out / trace(rho_E)
 			end if
 
 !			if(get_tau_phase) then
@@ -1345,7 +1423,8 @@ contains
 
 		else if(type_in == '2') then
 			call calculate_dipole_excitation('g','O',rho_g,rho_O,.true.)
-			call calculate_dipole_excitation('O','E',rho_O,rho_out,.true.)
+			call calculate_dipole_excitation('O','E',rho_O,rho_E,.true.)
+			call calculate_dipole_excitation('E','2',rho_E,rho_out,.true.)
 		end if
 
 	end subroutine calculate_dipoled_rho
@@ -1386,6 +1465,7 @@ contains
     	end if
 
       	if(.not. (size(rho_out,1) == N1_from_type(type_out) .and. size(rho_out,2) == N2_from_type(type_out))) then
+      		write(*,*) type_in,type_out,mu_from_left, size(rho_out,1) , N1_from_type(type_out) , size(rho_out,2) , N2_from_type(type_out)
  			call print_error_message(-1,  'dimension error1 in calculate_dipole_excitation')
  			stop
       	end if
@@ -1399,8 +1479,8 @@ contains
       	N2 = N1*(N1-1)/2
 		N = N1 + N1*(N1-1)/2
 
-      	allocate(rho0(0:N,0:N))
-      	allocate(dd(0:N,0:N))
+      	ALLOCATE(rho0,(0:N,0:N))
+      	ALLOCATE(dd,(0:N,0:N))
 
       	rho0 = 0.0d0
       	rho_out = 0.0d0
@@ -1421,13 +1501,13 @@ contains
 		! create bigger matrix of dipole moments
 		if (use_module_nakajima_zwanzig) then
       		do k = 1, N1
-   				dd(0,k) = current_e_block%dd(k)
-   				dd(k,0) = current_e_block%dd(k)
+   				dd(0,k) = current_e_block%dd(k,1)
+   				dd(k,0) = current_e_block%dd(k,1)
       		end do
       	else
       		do k = 1, N1
-   				dd(0,k) = current_s_block%dd(k)
-   				dd(k,0) = current_s_block%dd(k)
+   				dd(0,k) = current_s_block%dd(k,1)
+   				dd(k,0) = current_s_block%dd(k,1)
       		end do
       	end if
 
@@ -1467,7 +1547,8 @@ contains
 			rho_out = rho0((N1+1):N,1:N1)
 		end if
 
-      	deallocate(rho0,dd)
+      	DEALLOCATE(rho0)
+      	DEALLOCATE(dd)
 
 	end subroutine calculate_dipole_excitation
 

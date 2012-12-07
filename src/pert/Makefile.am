@@ -30,10 +30,10 @@ ndrv_x_DEPENDENCIES = modules/tdpt3/libtdpt3.a modules/qme/libqme.a modules/test
 
 noinst_LIBRARIES = libresources.a libprepare.a
 
-libresources_a_SOURCES = resources.F90 nis.F90
+libresources_a_SOURCES = resources.F90 nis.F90 nakajima_zwanzig_shared.F90
 libprepare_a_SOURCES = prepare.F90 bath_interactions.F90 excitons.F90 \
  simulate_wizard.F90 goft.F90 rates.F90 input_wizard.F90 orfact.F90 resp3_rss.F90 resp3_wd.F90 resp3_site.F90 resp3_ext.F90 \
- response3.F90 signal3.F90 twod.F90 pump_probe.F90 nakajima_zwanzig_shared.F90
+ response3.F90 signal3.F90 twod.F90 pump_probe.F90
  
  
 #

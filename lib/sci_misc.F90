@@ -127,12 +127,16 @@ contains
     real(dp) :: res
     integer(i4b) :: i
 
-    res = product ((/(i, i = 1, n)/))
+    !res = product ((/(i, i = 1, n)/))
+    res = 1
+    do i=2,n
+    	res  = res*i
+    end do
 
   end function factorial
 
   ! alpha, aalpha are omega/hbar of the oscillators
-  real(dp) recursive function franc_condon_factor(v,alpha,vv,aalpha,d) result(res)
+  real(dp) function franc_condon_factor(v,alpha,vv,aalpha,d) result(res)
   		integer(i4b), intent(in) 	:: v,vv
   		real(dp), intent(in)		:: alpha, aalpha, d
 

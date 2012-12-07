@@ -1012,6 +1012,10 @@ namespace eval NOSE_ssf {
 	variable mode_type;
 	variable mode_count 0;
 	variable reorganization_energy;
+    variable qo_levels;
+    variable qo_frequency;
+    variable qo_reorganization_energy;
+    variable qo_huang_rhys_factor;
     variable correlation_time;
     variable rstrength;
     
@@ -1288,6 +1292,7 @@ namespace eval NOSE_ssf {
 		variable transition_energies;
 		variable transition_gofts;
 		variable transition_disorders;
+		variable transition_vibrational_levels;
 		variable transition_count;
 
 		if {[check_level 2 BLOCK] == 0 } {
@@ -1333,6 +1338,16 @@ namespace eval NOSE_ssf {
 			
 				set transition_disorders($current_block_id,$id,$id)         0;
 				
+			}
+			
+			if { $len > 11 } {
+						
+				set transition_vibrational_levels($current_block_id,$id)         [lindex $args 11];				
+						
+			} else {
+						
+				set transition_vibrational_levels($current_block_id,$id)         0;
+					
 			}
 			
 			incr transition_count($current_block_id);
@@ -1773,6 +1788,153 @@ namespace eval NOSE_ssf {
 		}
 
 	}
+	
+	proc BEGIN_QUANTUM_OSCILLATOR { id } {
+		variable level;
+		variable level_name;
+		variable qo_id;
+		
+		if {[check_level 1 SSF] == 0 } {
+		
+			incr_level QO_OSCILLATOR;		
+
+			set qo_id $id;
+		
+		
+		} else {
+		
+			print_ERROR BEGIN_QUANTUM_OSCILLATOR;
+			exit;
+		
+		}
+
+	}
+
+	proc END_QUANTUM_OSCILLATOR { } {
+		variable level;
+		variable level_name;
+
+		if {[check_level 2 QO_OSCILLATOR] == 0 } {
+
+			decr_level;			
+						
+
+
+		} else {
+			
+			print_ERROR END_QUANTUM_OSCILLATOR;
+			exit;
+		
+		}
+
+	}
+
+	proc QO_HUANG_RHYS_FACTOR { type } {
+		variable level;
+		variable level_name;
+		variable qo_id;
+		variable qo_huang_rhys_factor;
+		variable qo_reorganization_energy;
+		
+		if { [info exists qo_reorganization_energy($qo_id) ] } {
+			puts "cannot input both Huang-Rhys factor and reorganization energy";
+			print_ERROR QO_HUANG_RHYS_FACTOR;
+			exit;
+		}
+
+		if {[check_level 2 QO_OSCILLATOR] == 0 } {
+		
+			set qo_huang_rhys_factor($qo_id) $type 
+
+		} else {
+			
+			print_ERROR QO_HUANG_RHYS_FACTOR;
+			exit;
+		
+		}
+
+	}
+	
+	proc QO_REORGANIZATION_ENERGY { type } {
+		variable level;
+		variable level_name;
+		variable qo_id;
+		variable qo_reorganization_energy;
+		variable qo_huang_rhys_factor;
+		
+		if { [info exists qo_huang_rhys_factor($qo_id) ] } {
+			puts "cannot input both Huang-Rhys factor and reorganization energy";
+			print_ERROR QO_REORGANIZATION_ENERGY;
+			exit;
+		}
+		
+
+		if {[check_level 2 QO_OSCILLATOR] == 0 } {
+		
+			set qo_reorganization_energy($qo_id) [NOSE_conf::convert_energy $type]; 
+
+		} else {
+			
+			print_ERROR QO_REORGANIZATION_ENERGY;
+			exit;
+		
+		}
+
+	}
+	
+	proc QO_LEVELS { type } {
+		variable level;
+		variable level_name;
+		variable qo_id;
+		variable qo_levels;
+
+		if {[check_level 2 QO_OSCILLATOR] == 0 } {
+		
+			set qo_levels($qo_id) $type 
+
+		} else {
+			
+			print_ERROR QO_LEVELS;
+			exit;
+		
+		}
+
+	}
+	
+	proc QO_FREQUENCY { type } {
+		variable level;
+		variable level_name;
+		variable qo_id;
+		variable qo_frequency;
+
+		if {[check_level 2 QO_OSCILLATOR] == 0 } {
+		
+			set qo_frequency($qo_id) [NOSE_conf::convert_energy $type]; 
+
+		} else {
+			
+			print_ERROR QO_FREQUENCY;
+			exit;
+		
+		}
+
+	}	
+	
+	proc QO_OSCILLATOR { qo_oscillator } {
+		variable level;
+		variable level_name;
+
+		if {[check_level 3 GROUP] == 0 } {
+		
+
+		} else {
+			
+			print_ERROR QO_OSCILLATOR;
+			exit;
+		
+		}
+
+	} 	
 
 	proc BEGIN_CORRF { id } {
 		variable level;
@@ -2761,6 +2923,54 @@ namespace eval NOSE_ssf {
 	}
 	
 	
+	proc putHarmonicOscillators { block_id } {
+	
+		variable transition_vibrational_levels;
+		variable transition_ids;
+		variable transition_count;
+		variable qo_levels;
+		variable qo_frequency;
+		variable qo_reorganization_energy;
+		variable qo_huang_rhys_factor;
+		
+		set elist [list];
+		
+		set qo_levels(0) 0;
+		set qo_frequency(0) 0;
+		set qo_reorganization_energy(0) 0;
+		set qo_huang_rhys_factor(0) 0;
+		
+		for { set i 1 } { $i <= $transition_count($block_id) } { incr i } {
+		
+			set k [lindex $transition_ids($block_id) [expr $i - 1]];
+			set kk $transition_vibrational_levels($block_id,$k);
+
+			if { [info exists qo_reorganization_energy($kk) ] && $qo_frequency($kk) != 0  } {
+
+				set qo_huang_rhys_factor($kk) [ expr $qo_reorganization_energy($kk) / $qo_frequency($kk) ];
+				
+			} elseif { [info exists qo_huang_rhys_factor($kk) ] && $qo_frequency($kk) != 0 }  { 
+
+				set qo_reorganization_energy($kk) [ expr $qo_huang_rhys_factor($kk) * $qo_frequency($kk) ];
+				
+			} else {
+				set qo_reorganization_energy($kk) 0
+				set qo_huang_rhys_factor($kk) 0
+			}
+
+			lappend elist $qo_levels($kk) $qo_frequency($kk) $qo_reorganization_energy($kk) $qo_huang_rhys_factor($kk);
+		
+		}
+		
+		set ll [list v [expr $transition_count($block_id) * 4] r $elist]
+		foreach a $ll {
+		    NOSE_conf::print $a
+		    #puts $a;
+		}	
+	
+	}
+		
+	
 	#
 	# Lattice vectors
 	#
@@ -3371,6 +3581,13 @@ namespace eval NOSE_ssf {
 	namespace export BROWNIAN_OMEGA;
 	namespace export GAMMA;
 	namespace export BEGIN_DISORDER;
+	namespace export BEGIN_QUANTUM_OSCILLATOR
+	namespace export END_QUANTUM_OSCILLATOR
+	namespace export QO_HUANG_RHYS_FACTOR
+	namespace export QO_OSCILLATOR
+	namespace export QO_REORGANIZATION_ENERGY
+	namespace export QO_FREQUENCY
+	namespace export QO_LEVELS	
 	namespace export END_DISORDER; 
 	namespace export TYPE;
 	namespace export TARGETS;
@@ -3474,6 +3691,13 @@ namespace import NOSE_ssf::REORGANIZATION_ENERGY;
 namespace import NOSE_ssf::BROWNIAN_OMEGA;
 namespace import NOSE_ssf::BEGIN_DISORDER;
 namespace import NOSE_ssf::END_DISORDER;
+namespace import NOSE_ssf::BEGIN_QUANTUM_OSCILLATOR
+namespace import NOSE_ssf::END_QUANTUM_OSCILLATOR
+namespace import NOSE_ssf::QO_HUANG_RHYS_FACTOR
+namespace import NOSE_ssf::QO_OSCILLATOR
+namespace import NOSE_ssf::QO_REORGANIZATION_ENERGY
+namespace import NOSE_ssf::QO_FREQUENCY
+namespace import NOSE_ssf::QO_LEVELS
 namespace import NOSE_ssf::TYPE;
 namespace import NOSE_ssf::TARGETS;
 namespace import NOSE_ssf::WIDTH;
@@ -3926,6 +4150,7 @@ for { set i 1 } { $i <= $NOSE_ssf::block_count } { incr i } {
 	NOSE_ssf::putDisorders $i
 	NOSE_ssf::putDisWidths $i
 	NOSE_ssf::putRStrengths $i
+	NOSE_ssf::putHarmonicOscillators $i
 }
 NOSE_ssf::putBlockEnd
 
