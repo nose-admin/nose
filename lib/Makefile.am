@@ -38,10 +38,8 @@ FC = ${MPIFC}
 #
 
 # numer
-#+aurelia
 numer_gamma.mod: ${ALLDEP} 
 numer_gamma.o: ${ALLDEP}
-#-aurelia
 numer_fft.mod: ${ALLDEP} std_io.mod
 numer_fft.o:   ${ALLDEP} std_io.mod
 numer_fft_row.o:   ${ALLDEP} std_io.mod

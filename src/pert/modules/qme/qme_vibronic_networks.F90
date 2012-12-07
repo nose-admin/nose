@@ -40,22 +40,14 @@ module qme_vibronic_networks
 	implicit none
 	
 	logical :: oneParticle=.true.	! if true, one-particle approximation: molecules in their electronic ground state are also in their vibrational ground state								
-!	Define the type of molecule under investigation	
-	character(len=10), parameter :: molecule='dimer' ! dimer, jonas, molecule or FMO
-!	Define the Liouville pathway of interest
-	character(len=10), parameter :: pathway='R1'
-!-- directly compute dgap and sum over the gaussian distribution
- 	integer, parameter	:: runs    = 300   ! number of runs to account for the disorder
-	real(dp), parameter :: dgapini =-50._dp   ! initial energy gap for loop over disorder
+!	Define if we want to compute the whole SPECTRUM or only the diagonal of the spectrum
+	logical, parameter:: spectrum=.true.
 !-- declaration of parameters
 !	real(dp) :: j0in  = 0.0003_dp
 	real(dp) :: lambdain= 35._dp			! Bath reorganization energy [cm-1]
 	real(dp) :: wDin  = 130._dp			! Debye frequency [cm-1]
  	real(dp) :: HR = 0.05_dp			! Huang-Rys factor (lambdain = HR * wHin)
-!	real(dp) :: HR = 0.025_dp			! used for jonas' dimer
 
-!	Define if we want to compute the whole SPECTRA or only the diagonal of the spectra
-	logical, parameter:: spectra=.false.
 
 !--- generate dgap randomly
 !    real(dp), dimension(:), allocatable :: ran    ! random number with normal distribution
@@ -138,7 +130,7 @@ contains
 	subroutine main_vibronic_networks()
 	
 
-		character(len=15)	:: formN, formNtot, formNN, formNtotNtot	! output format
+		character(len=15)	:: formN, formNtot, formNN, formNtotNtot, formSpec	! output format
 		character(len=20)	:: formPop, formCoh, formSig	!output formats
 		character(len=4)	:: dim             	!output formats
 		character(len=20)	:: out_file			!name of the output files for the coherences 
@@ -167,9 +159,9 @@ contains
 
 		complex(dpc), dimension(:,:), allocatable	:: Xsi		! Vibrational character of the coherences, integrated over the energy disorder
 
-		complex(dpc), parameter	:: wini=12160._dpc	! inital frequency for sampling of the signal (cm-1)
-		complex(dpc), parameter :: wdw =030._dpc		! discretization step for w1 (cm-1)
-		integer, parameter		:: wsteps= 1 		! number of iteration on w
+!		complex(dpc), parameter	:: wini=12000._dpc	! inital frequency for sampling of the signal (cm-1)
+!		complex(dpc), parameter :: wdw =020._dpc		! discretization step for w1 (cm-1)
+!		integer, parameter		:: wsteps= 20 		! number of iteration on w
 
 		real(dp) :: wHin           							! High-frequency mode treated explicitely [cm-1]
 		real(dp), parameter :: wHini   =117._dp			! initial mode frequency [cm-1]
@@ -179,7 +171,7 @@ contains
 !		real(dp) :: lambdain  = 185.*0.05_dp	! bath reorganization energy [cm-1]
 		
 !----   Prepare dynamics
-		integer, parameter	:: Tsteps = 2000		! number of time step
+		integer, parameter	:: Tsteps = 1500		! number of time step
 		integer		:: Nfin, Nexc, Nsrc, Nacp	! positions of the final (RC: 1), excited (from the wire, BChl 3: 4), source (Chlorosome: 9) and accepting (to the wire, BChl 1,6: 2,7) sites
 		logical		:: loc	! true : local basis
 
@@ -199,12 +191,13 @@ contains
 
 		complex(dpc), dimension(:,:), allocatable	:: sig			! For output of Amp_t: signal of all difference pathways
 		complex(dpc), dimension(:), allocatable :: totsig			! Sum of the signal over all pathways
+		complex(dpc), dimension(:,:,:), allocatable :: spec_tot     ! Total spectrum (w1, w3, t)
 
 !		real(dp) , dimension(Tsteps)	:: tmem				! time evolution
 
 		complex(dpc) :: maxi	! using in testing LL diagonalization
 		real(dp), dimension(:), allocatable	:: maxAmp		! Maximum amplitude of the coherence after decay of the electronic one. 
-		real(dp)	:: maxSig	! Maximum tot signal, output in spectra.dat
+		real(dp)	:: maxSig	! Maximum tot signal, output in spectrum.dat
 
 
 !--- For output / verification purpose
@@ -231,7 +224,7 @@ contains
 		end if
 !		write(6,*) 'vib: Nfin, Nexc, Nsrc, loc ', Nfin, Nexc, Nsrc, loc
 		
-		write(6,*) 'Starting calculation for: ', molecule
+		write(6,*) 'Starting calculation for: ', molSystem
 
 		! Feeding and draining rates
 		Kf = Kfin
@@ -247,6 +240,12 @@ contains
 !		end do 
 !		close (unit=101)
 		
+!-- Allocatable matrix for the total spectrum
+		allocate(spec_tot(spec_fq(3),spec_fq(3),Tsteps+1)) ! spec_fq(3) is the number of steps of w1, w3 in 2D spectrum
+		spec_tot=0.0
+!--
+
+
 !---
 
 !  prepare file were the maximum amplitude of the vibrational coherences will be saved 
@@ -256,9 +255,9 @@ contains
 !   open(unit=555, file=trim(file_join(out_dir,"gft2.dat")))
 !   write(555,'(2a15, 2a25)') '#         w1', 'w3', 'Re(gft(w1)*gft(w3))', 'imag'
 
-   ! open file only for calculation of spectra
-   if (spectra) then
-   		open(unit=11,file=trim(file_join(out_dir,"spectra.dat")))
+   ! open file only for calculation of spectrum
+   if (spectrum) then
+   		open(unit=11,file=trim(file_join(out_dir,"spectrum.dat")))
    		write(11,'(2a15,22a25)') '#         w1', 'w3', 'Re(Max(Totsig(t>1ps)))', &
 			& 'Re(totsig(1))'   , 'Re(totsig(100))' , 'Re(totsig(200))' , 'Re(totsig(300))' , 'Re(totsig(400))' , 'Re(totsig(500))' ,	&	
 			& 'Re(totsig(600))' , 'Re(totsig(700))' , 'Re(totsig(800))' , 'Re(totsig(900))' , 'Re(totsig(1000))', 'Re(totsig(1100))',	&	
@@ -283,28 +282,27 @@ contains
 
 
 !### Loop over the frequency of observation
-!	SPECTRA
-!  do ww3=1, wsteps 
-!  w3 = wini + wdw*(ww3-1)
-!  w3 = wini + wdw*(ww3-1)
-!  write(6,'(a20,f10.0)') 	'###### w3 ######', real(w3)
+!	SPECTRUM
+  do ww3=1, spec_fq(3) 
+  w3 = spec_fq(1) + spec_fq(2)*(ww3-1)
+  write(6,'(a20,f10.0)') 	'###### w3 ######', real(w3)
 
-   do ww=1, wsteps 
-    w1 = wini + wdw*(ww-1)  ! effective frequency at wich we sample the signal by call of signal2D
+   do ww=1, spec_fq(3) 
+    w1 = spec_fq(1) + spec_fq(2)*(ww-1)  ! effective frequency at wich we sample the signal by call of signal2D
 	write(6,'(a20,f10.0)') 	'###### w1 ######', real(w1)
 
    do wwH=1, wHsteps
     wHin = wHini + wHdw*(wwH-1)
 	write(6,'(a20,f10.0)') 	'###### wHin ####', real(wHin)
 	
-	if (.not.spectra) w3 =w1
- 	if (molecule=='jonas') w3=12185. !E2-Eopt
+	if (.not.spectrum) w3 =w1
+ 	if (molSystem=='jonas') w3=12185. !E2-Eopt
 	
 !=== Loop over gap energy disorder. 
 	PDF = 0.
 	PDFs = 0.
-	do iterate=1,runs	!run over a representative width of the gaussian
-		if (runs==1) PDF=1	! 1 single only
+	do iterate=1,Nruns	!run over a representative width of the gaussian
+		if (Nruns==1) PDF=1	! 1 single only
 		dgapi = dgapini+iterate	 ! minimum should be low enough to cover the normal distribution
 !---
 
@@ -321,9 +319,9 @@ contains
 !---	Compute the PDF of the normal distribution to weight results with the corresponding probability
 !		First used in init_pops: should be computed before call to this subroutine
 		PDF = exp(-(dgapi-agg%gap)**2/(2*agg%dwidth**2))/(Sqrt(2*pi)*agg%dwidth) ! dwidth=sigma, gaussian standard deviation
-		if (runs==1) PDF=1 !doesn't affect results for only 1 run, with the original energy gap
+		if (Nruns==1) PDF=1 !doesn't affect results for only 1 run, with the original energy gap
 		PDFs = PDFs + PDF
-		if (iterate==runs)	write(6,*) 'sum of PDF = ', PDFs , ' after ', runs, ' iterations (should be 1)'
+		if (iterate==Nruns)	write(6,*) 'sum of PDF = ', PDFs , ' after ', Nruns, ' iterations (should be 1)'
 !---
 
 		! Prepare output format 
@@ -682,7 +680,7 @@ contains
 				end do		
 !				OD(nn) = OD(nn) + w * cm2eV * OD(nn)*PDF
 				OD(nn) = w * cm2eV * OD(nn)
-				if (iterate == runs) then
+				if (iterate == Nruns) then
 					write (6,*) 'Print OD with PDF = ', PDF
 					write(100,'(f15.5,e15.3)') real(w), real(OD(nn))
 				end if
@@ -771,23 +769,31 @@ contains
 							! Signal for each pathway
 							sig(:,(xi-1)*(Ntot*(Ntot-1)/2)+nn) = sig(:,(xi-1)*(Ntot*(Ntot-1)/2)+nn) + PDF * Amp_t(aa,bb,xi,:)
 							! Signal for each pathway, not averaged over disorder
-							if (pathway=='R1') sigdE(:,(xi-1)*(Ntot*(Ntot-1)/2)+nn) = Amp_t(aa,bb,xi,:)
-							! Sum over all pathways
-							totsig(:)    = totsig(:)    + PDF * Amp_t(aa,bb,xi,:)
+							if (pathway=='R1' .or. pathway=='R2') then
+								sigdE(:,(xi-1)*(Ntot*(Ntot-1)/2)+nn) = Amp_t(aa,bb,xi,:)
+								! Sum over all pathways
+								totsig(:)    = totsig(:)    + PDF * Amp_t(aa,bb,xi,:)
+							end if
 						end do
 					end if
 				end if
 			end do
 		end do
 		
+		
+		
 !       Total signal of the calculated pathway: sum the contribution of all coherences aa, bb for all vibrational level xi.
-		do aa = agg%nu**(agg%N-2)+1,(agg%N-1)*agg%nu**(agg%N-2)
-			do bb = agg%nu**(agg%N-2)+1,(agg%N-1)*agg%nu**(agg%N-2)
-				do xi=1, agg%nu
-					totsig(:)    = totsig(:)    + PDF * Amp_t(aa,bb,xi,:)
-				end do
-			end do
-		end do
+!		do aa = agg%nu**(agg%N-2)+1,(agg%N-1)*agg%nu**(agg%N-2)
+!			do bb = agg%nu**(agg%N-2)+1,(agg%N-1)*agg%nu**(agg%N-2)
+!				do xi=1, agg%nu
+!					totsig(:)    = totsig(:)    + PDF * Amp_t(aa,bb,xi,:)
+!				end do
+!			end do
+!		end do
+
+!       Save the total signal in spec_tot
+		spec_tot(ww,ww3,:) = totsig(:)
+		
 
 !---
 
@@ -913,7 +919,7 @@ contains
 
 		
 !
-		if (spectra) then
+		if (spectrum) then
 			if (ww==1) write(11,'(/a6, i4)') '# i = ',ww3-1
 			maxSig = 0.
 			do tdt=  1000, (Tsteps+1)	! Max amplitude after 1ps
@@ -988,8 +994,21 @@ contains
 !###    End loop of w1, ww
    end do 
 !###    End loop of w3, ww3
-! SPECTRA
-!  end do 
+! SPECTRUM
+  end do 
+
+!--- Output the spectrum in matrix form  
+		open(unit=11, file=trim(file_join(out_dir,"spec_tot.dat")))
+		write(dim, '(i4)') spec_fq(3)
+		formSpec='('//trim(adjustl(dim))//"e13.3"//')'
+		do nn=1, 10	! number of output in time
+			write(11, formSpec) real(transpose(spec_tot(:,:,1+(100*nn-1))))
+			write(11,'(//)') 
+			write(11,'(//)') 
+		end do
+!---
+
+		deallocate(spec_tot)
    
    close(unit=10)
    close(unit=555)
@@ -1036,7 +1055,7 @@ contains
 		allocate(agg%gap)
 		allocate(agg%dwidth)
 
-		select case (molecule)
+		select case (molSystem)
 			case ('FMO')
 				agg%N  = 9
 				agg%nu = 2	! >=1 (zero-ground state)
@@ -1079,7 +1098,7 @@ contains
 !  		dd = sqrt(2*0.05)	! Huang-Rys factor S=0.05 [Christensson_2012]
 
 !		Define the site energy and respective coupling
-		select case (molecule)
+		select case (molSystem)
 
     	   case ('FMO')
 
@@ -1114,7 +1133,7 @@ contains
  				agg%gap    = 110._dp			! initial gap energy
 				agg%dwidth = 80._dp/2.*sqrt(log(2.))	!width_gap = sqrt(2)*width_individual_pigment
 				
-				if (runs==1) dgapi = agg%gap 	! start with the original gap energy for the one run
+				if (Nruns==1) dgapi = agg%gap 	! start with the original gap energy for the one run
 				
 				agg%E = (/ -12210._dp, 0._dp, dgapi, 3500._dp /)*cm2eV		! Site Energy	
 				agg%J = transpose(reshape((/ 0.,   0. ,   0. , 0., & 
@@ -1130,7 +1149,7 @@ contains
  				agg%gap    = 150._dp			! initial gap energy
 				agg%dwidth = 80._dp/2.*sqrt(log(2.))	!width_gap = sqrt(2)*width_individual_pigment
 				
-				if (runs==1) dgapi = agg%gap 	! start with the original gap energy for the one run
+				if (Nruns==1) dgapi = agg%gap 	! start with the original gap energy for the one run
 				
 				agg%E = (/ -12210._dp, 0._dp, dgapi, 3500._dp /)*cm2eV		! Site Energy	
 				agg%J = transpose(reshape((/ 0.,   0. ,   0. , 0., & 
@@ -1149,7 +1168,7 @@ contains
  				agg%gap    = 0._dp			! initial site energy
 				agg%dwidth = 80._dp/2.*sqrt(2.*log(2.))
 				
-				if (runs==1) dgapi = agg%gap 	! start with the original gap energy for the one run
+				if (Nruns==1) dgapi = agg%gap 	! start with the original gap energy for the one run
 				
 				agg%E = (/ -12210._dp, dgapi, 3500._dp /)*cm2eV		! Site Energy	
 				agg%J = transpose(reshape((/ 0.,   0. ,  0., & 
@@ -1973,7 +1992,7 @@ contains
 
 
 	subroutine signal2D(w1, w3, Amp_t, En, RR, Gamma, agg, gft2)
-	! compute the signal in the 2D spectra for the frequencies w1 and w3, after fourier transform of the dynamical response function at the corresponding frequency. 
+	! compute the signal in the 2D spectrum for the frequencies w1 and w3, after fourier transform of the dynamical response function at the corresponding frequency. 
 	
 		complex(dpc), intent(in)					:: w1, w3		! frequency of the excited level after pulse 1 and 3, respectively
 		complex(dpc)								:: dw1, dw3		! difference between the excited and optical frequency corresponding to pulse 1 and 3, respectively
@@ -2060,7 +2079,7 @@ contains
 	
 		integer,      intent(in)	:: aa						! eigenstate involved in the optical transition
 		integer,      intent(in)	:: opt						! postition of the ground state from which the electronic state is excited
-		complex(dpc), intent(in)	:: dw						! frequency of interest in the 2D spectra - frequency of the coherence
+		complex(dpc), intent(in)	:: dw						! frequency of interest in the 2D spectrum - frequency of the coherence
 		complex(dpc), dimension(:,:), intent(in)	:: RR		! Relaxation tensor (=Redfield without the pure dephasing terms)
 		complex(dpc), dimension(:,:), intent(in)	:: Gamma	! coefficient matrix
 		complex(dpc)	:: cst, dummy, dumGamma, dumIncGamma 	! intermediate variable 
