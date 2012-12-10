@@ -9,3 +9,4 @@ config.status
 aclocal.m4
 *.gz
 .settings
+config.log
