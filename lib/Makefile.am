@@ -5,12 +5,13 @@ noinst_LIBRARIES = libnose.a
 libnose_a_SOURCES = std_types.F90 std_lapack.F90 numer_fft.F90 numer_fft_row.F90 util_char_graphics.F90 util_space.F90 \
                     std_io.F90 numer_ode.F90 numer_ode_rk4.F90 data_list.F90 util_timing.F90 numer_matrix.F90 \
                     numer_interp.F90 sci_foerster.F90 sci_brownian_oscillator.F90 numer_random.F90 std_parallel.F90 sci_redfield.F90 \
-                    sci_liouville.F90 sci_misc.F90 util_allocation.F90 util_allocation.h qch_lib.F90 util_tracing.h
+                    sci_liouville.F90 sci_misc.F90 util_allocation.F90 util_allocation.h qch_lib.F90 util_tracing.h numer_gamma.F90
 
 BUILT_SOURCES = std_types.mod std_lapack.mod numer_fft.mod util_char_graphics.mod \
  util_space.mod std_io.mod numer_ode.mod data_list.mod sci_misc.mod \
  util_timing.mod numer_matrix.mod numer_interp.mod sci_foerster.mod sci_brownian_oscillator.mod \
- numer_random.mod  std_parallel.mod sci_redfield.mod sci_liouville.mod util_allocation.mod qch_lib.mod
+ numer_random.mod  std_parallel.mod sci_redfield.mod sci_liouville.mod util_allocation.mod qch_lib.mod \
+ numer_gamma.mod 
 
 
 CLEANFILES = ${BUILT_SOURCES}  
@@ -37,6 +38,8 @@ FC = ${MPIFC}
 #
 
 # numer
+numer_gamma.mod: ${ALLDEP} 
+numer_gamma.o: ${ALLDEP}
 numer_fft.mod: ${ALLDEP} std_io.mod
 numer_fft.o:   ${ALLDEP} std_io.mod
 numer_fft_row.o:   ${ALLDEP} std_io.mod
@@ -97,7 +100,6 @@ qch_lib.o: ${ALLDEP} std_types.mod std_io.mod numer_matrix.mod sci_misc.mod
 qch_lib.mod: ${ALLDEP} std_types.mod std_io.mod numer_matrix.mod sci_misc.mod
 
 
-	
 
 
 

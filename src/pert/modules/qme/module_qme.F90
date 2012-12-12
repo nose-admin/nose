@@ -17,6 +17,8 @@ module module_qme
 
 	use qme_nakajima_zwanzig
 	use qme_weak_excitons
+	use qme_excitonic_networks
+	use qme_vibronic_networks
 
 	implicit none
 
@@ -250,6 +252,26 @@ contains
 		end if
 
 		end if ! if (nr_blocks > 0) then
+
+		!*************************************************************
+		! Call qme_excitonic_networks
+		!*************************************************************
+		if (resources_output_contains("excitonic_networks")) then
+
+			call main_excitonic_networks()
+
+		end if
+
+
+
+		!*************************************************************
+		! Call qme_vibronic_networks
+		!*************************************************************
+		if (resources_output_contains("vibronic_networks")) then
+
+			call main_vibronic_networks() 
+			
+		end if
 
 	end subroutine do_qme_work
 

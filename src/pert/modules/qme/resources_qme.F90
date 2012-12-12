@@ -46,6 +46,20 @@ module resources_qme
     character          :: submethod1
     character          :: submethod2
 
+    integer, dimension(4)      :: Npos       ! associated with input variable excSource
+    character(len=12)          :: molSystem	 ! associated with input variable molecule
+    character(len=12)          :: pathway	 ! associated with input variable pathway
+    integer                    :: Nruns      ! associated with input variable runs
+    integer                    :: dgapini    ! associated with input variable runs
+    integer, dimension(3)      :: spec_fq    ! associated with input variable spec_wini-dw-wst
+    character(len=12)          :: locBasis	 ! associated with input variable localBasis
+    character(len=12)          :: doRelax    ! associated with input variable relaxation
+    character(len=12)          :: doSecAp    ! associated with input variable secular
+    character(len=12)          :: pureDephasing ! associated with input variable dephasing
+    real(dp)                   :: Kfin    	 ! associated with input variable feeding 
+    real(dp)                   :: Kdin    	 ! associated with input variable draining
+
+
 !PGF95    private :: populations, grstate_coherences, remaining_coherences
 
 contains
