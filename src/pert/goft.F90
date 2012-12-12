@@ -35,6 +35,7 @@ module goft
     private::brownian_general
     private::brownian
     private::brownian_underdamped
+    private::brownian_no_matsubara
     private::deltacf
     private::dimensionless_CC
     public::ctanh
@@ -364,6 +365,11 @@ contains
                 call brownian(params(1:2,i),ggt,cct,hht,ll,ADD="yes")
                 lambda = lambda + ll
 
+            else if (trim(tp(i)) == "BROWNIAN_NO_MATSUBARA") then
+
+                call brownian_no_matsubara(params(1:2,i),ggt,cct,hht,ll,ADD="yes")
+                lambda = lambda + ll
+
             else if (trim(tp(i)) == "DELTA") then
 
                 !print *, "GAMMA = ", params(1,i)
@@ -667,7 +673,7 @@ contains
 
 
     !
-    ! Dimensionless brownian overdumped CC(T,x),
+    ! Dimensionless brownian overdamped CC(T,x),
     !    x = beta hbar Lambda/2
     !    T = 2 t / beta hbar
     !    C(Lambda, ll, t) = Lambda ll CC(T,x)
@@ -821,6 +827,72 @@ contains
 
 
 	end subroutine brownian
+
+
+
+	subroutine brownian_no_matsubara(params,ggt,cct,hht,lambda,ADD)
+        real(dp), dimension(:), intent(in)		:: params
+        complex(dpc), dimension(:), pointer		:: ggt
+        complex(dpc), dimension(:), pointer		:: cct,hht
+        real(dp), intent(out)						:: lambda
+        character(len=*), intent(in), optional	:: ADD
+
+        complex(dpc), dimension(size(ggt))	:: cct_tmp,hht_tmp,ggt_tmp
+        real(dp)								:: BH, LLambda,t
+        integer(i4b)							:: Ntt, i
+
+        !
+        ! Set evaluation parameters
+        !
+        lambda 	= params(1)
+        LLambda 	= 1.0_dp/params(2)
+
+        ! dt ... elementary grid step
+
+        Ntt = size(ggt)
+
+        BH = (0.6582120_dp/8.617385d-5)/temp  ! hbar/kT
+
+        do i=1, Ntt
+        	t = (i-1)*dt
+
+	        cct_tmp(i) = lambda*LLambda*&
+	        	exp(-(2.0*t/BH)*(BH*LLambda/2.0))*(1.0_dp/tan(BH*LLambda/2.0) - cmplx(0,1,dpc))
+	        if(i > 1) then
+    	    	hht_tmp(i) = hht_tmp(i-1) + dt*cct_tmp(i)
+        		ggt_tmp(i) = ggt_tmp(i-1) + dt*hht_tmp(i)
+        	else
+    	    	hht_tmp(i) = dt*cct_tmp(i)
+        		ggt_tmp(i) = dt*hht_tmp(i)
+        	end if
+        end do
+
+!		open(unit=11,file='/home/olsij4am/prace/NOSE-debug.dat')
+!		open(unit=12,file='/home/olsij4am/prace/NOSE-debug2.dat')
+
+    	! write to global functions
+        if (.not. present(ADD)) then
+   	    	ggt = 0.0_dp
+       		cct = 0.0_dp
+       		hht = 0.0_dp
+        end if
+
+	   	do i=1,Ntt
+ !       	write(11,*) i*dt,real(ggt_tmp(i)),real(hht_tmp(i)),real(cct_tmp(i))
+  !      	write(12,*) i*dt,aimag(ggt_tmp(i)),aimag(hht_tmp(i)),aimag(cct_tmp(i))
+
+        	cct(i) = cct_tmp(i) + cct(i)
+    	    hht(i) = hht_tmp(i) + hht(i)
+        	ggt(i) = ggt_tmp(i) + ggt(i)
+    	end do
+
+!	   	close(11)
+!   	close(12)
+!    	write(*,*) 'debug functions written'
+!    	stop
+
+
+	end subroutine brownian_no_matsubara
 
 
 	subroutine brownian_underdamped(params,ggt,cct,hht,lambda,ADD)

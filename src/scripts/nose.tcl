@@ -3340,6 +3340,15 @@ namespace eval NOSE_ssf {
 							}	
 						}
 
+						BROWNIAN_NO_MATSUBARA {
+							set lpar $arg;
+							if { [llength $lpar] == 2 } {
+								set par(1) [lindex $lpar 0];
+								set par(2) [lindex $lpar 1];									
+								putBrownianNoMatsubaraMode $par(1) $par(2);
+								set state type;
+							}	
+						}
 					
 						GAUSSIAN {
 							set lpar $arg;
@@ -3409,6 +3418,17 @@ namespace eval NOSE_ssf {
 	proc putBrownianMode { reorg tc } {
 
 		putString BROWNIAN;
+	
+		set ll [list v 2 r [list $reorg $tc]]
+		foreach a $ll {
+			NOSE_conf::print $a;
+		}	
+
+	}
+	
+	proc putBrownianNoMatsubaraMode { reorg tc } {
+
+		putString BROWNIAN_NO_MATSUBARA;
 	
 		set ll [list v 2 r [list $reorg $tc]]
 		foreach a $ll {
@@ -4258,6 +4278,9 @@ for { set i 1 } { $i <= $NOSE_ssf::goft_count } { incr i } {
 
 			BROWNIAN { set parms [list $NOSE_ssf::reorganization_energy($i,$j)  $NOSE_ssf::correlation_time($i,$j)];
 					   NOSE_ssf::putGoftMode BROWNIAN $parms; }
+
+			BROWNIAN_NO_MATSUBARA { set parms [list $NOSE_ssf::reorganization_energy($i,$j)  $NOSE_ssf::correlation_time($i,$j)];
+					   NOSE_ssf::putGoftMode BROWNIAN_NO_MATSUBARA $parms; }
 			
 			BROWNIAN_UNDERDAMPED { set parms [list $NOSE_ssf::reorganization_energy($i,$j)  $NOSE_ssf::brownian_omega($i,$j)];
 					   NOSE_ssf::putGoftMode BROWNIAN_UNDERDAMPED $parms; }
