@@ -867,9 +867,6 @@ contains
         	end if
         end do
 
-!		open(unit=11,file='/home/olsij4am/prace/NOSE-debug.dat')
-!		open(unit=12,file='/home/olsij4am/prace/NOSE-debug2.dat')
-
     	! write to global functions
         if (.not. present(ADD)) then
    	    	ggt = 0.0_dp
@@ -878,19 +875,10 @@ contains
         end if
 
 	   	do i=1,Ntt
- !       	write(11,*) i*dt,real(ggt_tmp(i)),real(hht_tmp(i)),real(cct_tmp(i))
-  !      	write(12,*) i*dt,aimag(ggt_tmp(i)),aimag(hht_tmp(i)),aimag(cct_tmp(i))
-
         	cct(i) = cct_tmp(i) + cct(i)
     	    hht(i) = hht_tmp(i) + hht(i)
         	ggt(i) = ggt_tmp(i) + ggt(i)
     	end do
-
-!	   	close(11)
-!   	close(12)
-!    	write(*,*) 'debug functions written'
-!    	stop
-
 
 	end subroutine brownian_no_matsubara
 
