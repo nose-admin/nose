@@ -47,11 +47,11 @@ IMPLICIT NONE
 INTEGER, PARAMETER :: dp = SELECTED_REAL_KIND(14, 60)
 
 INTEGER, INTENT(IN)       :: mo
-COMPLEX (dp), INTENT(IN)  :: z
-COMPLEX (dp), INTENT(OUT) :: w
+COMPLEX(dpc), INTENT(IN)  :: z
+COMPLEX(dpc), INTENT(OUT) :: w
 
 ! Local variables
-COMPLEX (dp) :: eta, eta2, sum
+COMPLEX(dpc) :: eta, eta2, sum
 REAL (dp), PARAMETER :: c0(12) = (/ .833333333333333E-01_dp,  &
           -.277777777777778E-02_dp, .793650793650794E-03_dp,  &
           -.595238095238095E-03_dp, .841750841750842E-03_dp,  &
@@ -335,20 +335,22 @@ END SUBROUTINE cgamma
 
 FUNCTION cincgamma(alpha, x) RESULT(fn_val)
  
-COMPLEX (dp), INTENT(IN)  :: alpha
-COMPLEX (dp), INTENT(IN)  :: x
-COMPLEX (dp)              :: fn_val
+COMPLEX(dpc), INTENT(IN)  :: alpha
+COMPLEX(dpc), INTENT(IN)  :: x
+COMPLEX(dpc)              :: fn_val
 
-COMPLEX (dp)  :: p, q
+COMPLEX(dpc)  :: p, q, aalpha, ccone
 INTEGER       :: i, ilim
 REAL (dp), PARAMETER     :: zero = 0.0_dp, xlim = 1.0_dp
-COMPLEX (dp), PARAMETER  :: cone = (1.0_dp, 0.0_dp)
+COMPLEX(dpc), PARAMETER  :: cone = (1.0_dp, 0.0_dp)
 REAL (dp), PARAMETER     :: re = (0.36787944117144232_dp, 0.0_dp)
 INTEGER, PARAMETER       :: ibuf = 34
 
 ! --- If x is near the negative real axis, then shift to x=1.
 IF (dnrm(x) < xlim .OR. REAL(x, KIND=dp) < zero .AND. ABS(AIMAG(x)) < xlim) THEN
-  fn_val = re / cdh(alpha, cone)
+  aalpha = alpha
+  ccone = cone
+  fn_val = re / cdh(aalpha, ccone)
   ilim = REAL(x/re, KIND=dp)
   DO  i = 0, ibuf - ilim
     CALL term(alpha, x, i, p, q)
@@ -366,11 +368,11 @@ FUNCTION cdh(alpha, x) RESULT(fn_val)
 ! --- Written By Eric Kostlan & Dmitry Gokhman
 ! --- March  1986
 
-COMPLEX (dp), INTENT(IN)  :: alpha
-COMPLEX (dp), INTENT(IN)  :: x
-COMPLEX (dp)              :: fn_val
+COMPLEX(dpc), INTENT(IN)  :: alpha
+COMPLEX(dpc), INTENT(IN)  :: x
+COMPLEX(dpc)              :: fn_val
 
-COMPLEX (dp)  :: term, sum, cn, alpha1
+COMPLEX(dpc)  :: term, sum, cn, alpha1
 INTEGER       :: i, n
 REAL (dp), PARAMETER  :: one = 1.0_dp
 
@@ -400,11 +402,11 @@ FUNCTION cdhs(alpha, x) RESULT(fn_val)
 ! --- Written By Eric Kostlan & Dmitry Gokhman
 ! --- March  1986
 
-COMPLEX (dp), INTENT(IN)  :: alpha
-COMPLEX (dp), INTENT(IN)  :: x
-COMPLEX (dp)              :: fn_val
+COMPLEX(dpc), INTENT(IN)  :: alpha
+COMPLEX(dpc), INTENT(IN)  :: x
+COMPLEX(dpc)              :: fn_val
 
-COMPLEX (dp)  :: p0, q0, p1, q1, r0, r1, ci, factor
+COMPLEX(dpc)  :: p0, q0, p1, q1, r0, r1, ci, factor
 INTEGER       :: i
 REAL (dp), PARAMETER  :: zero = 0.0_dp, half = 0.5_dp, one = 1.0_dp
 REAL (dp), PARAMETER  :: tol1 = 1.0D+10, tol2 = 1.0D-10, error = 5.D-18
@@ -451,13 +453,13 @@ END FUNCTION cdhs
 SUBROUTINE term(alpha, x, i, p, q)
 ! --- Calculate p*q = -1**i(1 - x**(alpha+i))/(alpha+i)i ! carefully.
 
-COMPLEX (dp), INTENT(IN)   :: alpha
-COMPLEX (dp), INTENT(IN)   :: x
+COMPLEX(dpc), INTENT(IN)   :: alpha
+COMPLEX(dpc), INTENT(IN)   :: x
 INTEGER, INTENT(IN)        :: i
-COMPLEX (dp), INTENT(OUT)  :: p
-COMPLEX (dp), INTENT(OUT)  :: q
+COMPLEX(dpc), INTENT(OUT)  :: p
+COMPLEX(dpc), INTENT(OUT)  :: q
 
-COMPLEX (dp)  :: ci, cdlx, alphai
+COMPLEX(dpc)  :: ci, cdlx, alphai
 REAL (dp), PARAMETER  :: zero = 0.0_dp, one = 1.0_dp, two = 2.0_dp
 REAL (dp), PARAMETER  :: tol = 3.0D-7, xlim = 39.0_dp
 
@@ -491,7 +493,7 @@ END SUBROUTINE term
 
 FUNCTION dnrm(z) RESULT(fn_val)
 
-COMPLEX (dp), INTENT(IN)  :: z
+COMPLEX(dpc), INTENT(IN)  :: z
 REAL (dp)                 :: fn_val
 
 fn_val = ABS(REAL(z, KIND=dp)) + ABS(AIMAG(z))
