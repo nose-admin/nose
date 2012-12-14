@@ -1,3 +1,4 @@
+#include "util_allocation.h"
 !
 ! Input Wizard
 !
@@ -13,6 +14,7 @@ module input_wizard
     use input_tdpt3
     use input_qme
     use input_montecarlo
+    use sci_misc
 
     !use data_list
 
@@ -182,10 +184,10 @@ contains
                             current_s_block%N1 = sz(1)
                             !current_e_block%N1 = sz(1)
 
-                            allocate(rbuff_v(sz(1)))
+                            ALLOCATE(rbuff_v,(sz(1)))
                             rbuff_v = nis_get_real(sz(1))
                             current_s_block%en => rbuff_v(1:sz(1))
-                            allocate(current_s_block%en_orig(1:sz(1)))
+                            ALLOCATE(current_s_block%en_orig,(1:sz(1)))
                             current_s_block%en_orig = current_s_block%en
 
 
@@ -205,7 +207,7 @@ contains
                             if (sz(1) /= current_s_block%N1) then
                                 call print_error_message(-1,"dipole coordinates from NIS - wrong number of dipoles")
                             end if
-                            allocate(rbuff_m(sz(1),sz(2)))
+                            ALLOCATE(rbuff_m,(sz(1),sz(2)))
                             rbuff_m = nis_get_real(sz)
                             current_s_block%rr => rbuff_m
                             !if (parallel_id == 0) then
@@ -230,9 +232,11 @@ contains
                             if (sz(1) /= current_s_block%N1) then
                                 call print_error_message(-1,"dipole x-component from NIS - wrong number of dipoles")
                             end if
-                            allocate(rbuff_v(sz(1)))
+                            ALLOCATE(rbuff_v,(sz(1)))
+                            ALLOCATE(current_s_block%dx,(sz(1),1))
                             rbuff_v = nis_get_real(sz(1))
-                            current_s_block%dx => rbuff_v(1:sz(1))
+                            current_s_block%dx(:,1) = rbuff_v(1:sz(1))
+                            DEALLOCATE(rbuff_v)
                         else
                             call print_error_message(-1,"Missing record at NIS (dipole x-component)")
                         end if
@@ -245,9 +249,11 @@ contains
                             if (sz(1) /= current_s_block%N1) then
                                 call print_error_message(-1,"dipole y-component from NIS - wrong number of dipoles")
                             end if
-                            allocate(rbuff_v(sz(1)))
+							ALLOCATE(rbuff_v,(sz(1)))
+                            ALLOCATE(current_s_block%dy,(sz(1),1))
                             rbuff_v = nis_get_real(sz(1))
-                            current_s_block%dy => rbuff_v(1:sz(1))
+                            current_s_block%dy(:,1) = rbuff_v(1:sz(1))
+                            DEALLOCATE(rbuff_v)
                         else
                             call print_error_message(-1,"Missing record at NIS (dipole x-component)")
                         end if
@@ -260,9 +266,11 @@ contains
                             if (sz(1) /= current_s_block%N1) then
                                 call print_error_message(-1,"dipole z-component from NIS - wrong number of dipoles")
                             end if
-                            allocate(rbuff_v(sz(1)))
+							ALLOCATE(rbuff_v,(sz(1)))
+                            ALLOCATE(current_s_block%dz,(sz(1),1))
                             rbuff_v = nis_get_real(sz(1))
-                            current_s_block%dz => rbuff_v(1:sz(1))
+                            current_s_block%dz(:,1) = rbuff_v(1:sz(1))
+                            DEALLOCATE(rbuff_v)
                         else
                             call print_error_message(-1,"Missing record at NIS (dipole x-component)")
                         end if
@@ -272,12 +280,12 @@ contains
 
                         ! normalization of dipoles
                         do i = 1, current_s_block%N1
-                            rbuff_s = sqrt(current_s_block%dx(i)**2 + current_s_block%dy(i)**2 &
-                            + current_s_block%dz(i)**2)
+                            rbuff_s = sqrt(current_s_block%dx(i,1)**2 + current_s_block%dy(i,1)**2 &
+                            + current_s_block%dz(i,1)**2)
                             !rbuff_s = 1.0_dp
-                            current_s_block%dx(i) = current_s_block%dx(i)/rbuff_s
-                            current_s_block%dy(i) = current_s_block%dy(i)/rbuff_s
-                            current_s_block%dz(i) = current_s_block%dz(i)/rbuff_s
+                            current_s_block%dx(i,1) = current_s_block%dx(i,1)/rbuff_s
+                            current_s_block%dy(i,1) = current_s_block%dy(i,1)/rbuff_s
+                            current_s_block%dz(i,1) = current_s_block%dz(i,1)/rbuff_s
                         end do
 
 
@@ -291,12 +299,12 @@ contains
                             if (sz(1) /= current_s_block%N1) then
                                 call print_error_message(-1,"dipole length from NIS - wrong number of dipoles")
                             end if
-                            allocate(rbuff_v(sz(1)))
+                            ALLOCATE(rbuff_v,(sz(1)))
                             rbuff_v = nis_get_real(sz(1))
                             !print *, rbuff_v
-                            current_s_block%dx(1:sz(1)) = current_s_block%dx(1:sz(1))*rbuff_v(1:sz(1))
-                            current_s_block%dy(1:sz(1)) = current_s_block%dy(1:sz(1))*rbuff_v(1:sz(1))
-                            current_s_block%dz(1:sz(1)) = current_s_block%dz(1:sz(1))*rbuff_v(1:sz(1))
+                            current_s_block%dx(1:sz(1),1) = current_s_block%dx(1:sz(1),1)*rbuff_v(1:sz(1))
+                            current_s_block%dy(1:sz(1),1) = current_s_block%dy(1:sz(1),1)*rbuff_v(1:sz(1))
+                            current_s_block%dz(1:sz(1),1) = current_s_block%dz(1:sz(1),1)*rbuff_v(1:sz(1))
 
                         else
                             call print_error_message(-1,"Missing record at NIS (dipole length)")
@@ -316,7 +324,7 @@ contains
                                        sz(1), sz(2), " should be ", current_s_block%N1
                                 call print_error_message(-1,trim(cbuff))
                             end if
-                            allocate(rbuff_m(sz(1),sz(2)))
+                            ALLOCATE(rbuff_m,(sz(1),sz(2)))
                             rbuff_m = nis_get_real(sz)
                             current_s_block%J => rbuff_m
                         else
@@ -333,7 +341,7 @@ contains
                             if (sz(1) /= current_s_block%N1) then
                                 call print_error_message(-1,"goft index from NIS - wrong size")
                             end if
-                            allocate(ibuff_v(sz(1)))
+                            ALLOCATE(ibuff_v,(sz(1)))
                             ibuff_v = nis_get_integer(sz(1))
                             current_s_block%gindex => ibuff_v(1:sz(1))
                         else
@@ -350,7 +358,7 @@ contains
                             if (sz(1) /= current_s_block%N1) then
                                 call print_error_message(-1,"disorder index from NIS - wrong size")
                             end if
-                            allocate(ibuff_v(sz(1)))
+                            ALLOCATE(ibuff_v,(sz(1)))
                             ibuff_v = nis_get_integer(sz(1))
                             current_s_block%dindex => ibuff_v(1:sz(1))
                         else
@@ -369,7 +377,7 @@ contains
                                        sz(1), sz(2), " should be ", current_s_block%N1
                                 call print_error_message(-1,trim(cbuff))
                             end if
-                            allocate(rbuff_m(sz(1),sz(2)))
+                            ALLOCATE(rbuff_m,(sz(1),sz(2)))
                             rbuff_m = nis_get_real(sz)
                             current_s_block%dwidth => rbuff_m
                         else
@@ -386,9 +394,45 @@ contains
                             if (sz(1) /= current_s_block%N1) then
                                 call print_error_message(-1,"rotational strengths from NIS - wrong number of dipoles")
                             end if
-                            allocate(rbuff_v(sz(1)))
+                            ALLOCATE(rbuff_v,(sz(1)))
                             rbuff_v = nis_get_real(sz(1))
                             current_s_block%rs => rbuff_v(1:sz(1))
+                        else
+                            call print_error_message(-1,"Missing record at NIS (rotational strengths)")
+                        end if
+
+                        ! vibrational level counts
+                        if (nis_has_next()) then
+                            call nis_next(err)
+                            call print_error_message(err,"reading vibrational level counts from NIS")
+                            sz = nis_get_size()
+                            if (sz(1) /= current_s_block%N1 * 4) then
+                                call print_error_message(-1,"vibrational level counts from NIS - wrong number of counts")
+                            end if
+                            ALLOCATE(rbuff_v,(sz(1)))
+                            rbuff_v = nis_get_real(sz(1))
+                            !current_s_block%rs => rbuff_v(1:sz(1)) --- ZDE ULOZIT
+
+                            ALLOCATE(current_s_block%QHO_lvls,(current_s_block%N1))
+                            ALLOCATE(current_s_block%QHO_freq,(current_s_block%N1))
+                            ALLOCATE(current_s_block%QHO_hrfact,(current_s_block%N1))
+
+                            do i=1, current_s_block%N1
+                            	current_s_block%QHO_lvls(i) = round(rbuff_v(1+4*(i-1)))
+                            	current_s_block%QHO_freq(i) = rbuff_v(2+4*(i-1))
+                            	current_s_block%QHO_hrfact(i) = rbuff_v(4+4*(i-1))
+                            end do
+
+                            write(*,*) current_s_block%QHO_lvls
+                            write(*,*)
+                            write(*,*) current_s_block%QHO_freq
+                            write(*,*)
+                            write(*,*) current_s_block%QHO_hrfact
+                            write(*,*)
+
+                            DEALLOCATE(rbuff_v)
+
+                            write(*,*) 'VIBRATIONAL LEVELS', rbuff_v
                         else
                             call print_error_message(-1,"Missing record at NIS (rotational strengths)")
                         end if
@@ -461,7 +505,7 @@ contains
                             if (sz(1) /= 3) then
                                 call print_error_message(-1,"R1 from NIS - wrong number of component")
                             end if
-                            allocate(rbuff_v(sz(1)))
+                            ALLOCATE(rbuff_v,(sz(1)))
                             rbuff_v = nis_get_real(sz(1))
                             current_s_block%cell_vec1 => rbuff_v(1:sz(1))
                         else
@@ -476,7 +520,7 @@ contains
                             if (sz(1) /= 3) then
                                 call print_error_message(-1,"R2 from NIS - wrong number of component")
                             end if
-                            allocate(rbuff_v(sz(1)))
+                            ALLOCATE(rbuff_v,(sz(1)))
                             rbuff_v = nis_get_real(sz(1))
                             current_s_block%cell_vec2 => rbuff_v(1:sz(1))
                         else
@@ -491,7 +535,7 @@ contains
                             if (sz(1) /= 3) then
                                 call print_error_message(-1,"R3 from NIS - wrong number of component")
                             end if
-                            allocate(rbuff_v(sz(1)))
+                            ALLOCATE(rbuff_v,(sz(1)))
                             rbuff_v = nis_get_real(sz(1))
                             current_s_block%cell_vec3 => rbuff_v(1:sz(1))
                         else
@@ -511,7 +555,7 @@ contains
                                        sz(1), sz(2), " should be ", current_s_block%N1
                                 	call print_error_message(-1,trim(cbuff))
                             	end if
-                            	allocate(rbuff_m2(1,sz(1),sz(2)))
+                            	ALLOCATE(rbuff_m2,(1,sz(1),sz(2)))
                             	rbuff_m2(1,:,:) = nis_get_real(sz)
                             	current_s_block%Jcell => rbuff_m2
                         	else
@@ -533,7 +577,7 @@ contains
                                        sz(1), sz(2), " should be ", current_s_block%N1
                                 	call print_error_message(-1,trim(cbuff))
                             	end if
-                            	allocate(rbuff_m2(4,sz(1),sz(2)))
+                            	ALLOCATE(rbuff_m2,(4,sz(1),sz(2)))
                             	rbuff_m2(1,:,:) = nis_get_real(sz)
                         	else
                             	call print_error_message(-1,"Missing record at NIS (neighbor (2D) coupling energies)")
@@ -691,7 +735,7 @@ contains
                             !           sz(1), sz(2), " should be ", current_s_block%N1
                             !    call print_error_message(-1,trim(cbuff))
                             !end if
-                            allocate(rbuff_m(sz(1),sz(2)))
+                            ALLOCATE(rbuff_m,(sz(1),sz(2)))
                             rbuff_m = nis_get_real(sz)
                             current_i_block%J => rbuff_m
 
@@ -759,6 +803,8 @@ contains
                             !       BROWNIAN
                             !       BROWNIAN_GENERAL
                             !       BROWNIAN_UNDERDAMPED
+                            !       BROWNIAN_NO_MATSUBARA
+                            !       BROWNIAN_LOW_TEMP_HIERARCHY
                             !       DELTA
                             !       GAUSSIAN
                             !
@@ -791,7 +837,55 @@ contains
                                     if ((sz(1) /= 2).or.(sz(2) /= 1)) then
                                         call print_error_message(-1,"Brownian mode from NIS - wrong rank")
                                     end if
-                                    allocate(rbuff_v(2))
+                                    ALLOCATE(rbuff_v,(2))
+                                    rbuff_v = nis_get_real(2)
+                                    current_s_goft%params(1:2,current_s_goft%nr_modes) = rbuff_v
+                                else
+                                    call print_error_message(-1,"Missing record at NIS (Brownian mode)")
+                                end if
+                                write(cbuff,'(a,2f18.12)') "Brownian mode parameters ", rbuff_v
+                                call print_log_message(trim(cbuff),7)
+
+                            else if (trim(caux) == "BROWNIAN_NO_MATSUBARA") then
+
+                                current_s_goft%nr_modes = current_s_goft%nr_modes + 1
+                                current_s_goft%types(current_s_goft%nr_modes) = "BROWNIAN_NO_MATSUBARA"
+
+                                !
+                                ! Brownian parameters
+                                !
+                                if (nis_has_next()) then
+                                    call nis_next(err)
+                                    call print_error_message(err,"reading Brownian mode from NIS")
+                                    sz = nis_get_size()
+                                    if ((sz(1) /= 2).or.(sz(2) /= 1)) then
+                                        call print_error_message(-1,"Brownian mode from NIS - wrong rank")
+                                    end if
+                                    ALLOCATE(rbuff_v,(2))
+                                    rbuff_v = nis_get_real(2)
+                                    current_s_goft%params(1:2,current_s_goft%nr_modes) = rbuff_v
+                                else
+                                    call print_error_message(-1,"Missing record at NIS (Brownian mode)")
+                                end if
+                                write(cbuff,'(a,2f18.12)') "Brownian mode parameters ", rbuff_v
+                                call print_log_message(trim(cbuff),7)
+
+                            else if (trim(caux) == "BROWNIAN_LOW_TEMP_HIERARCHY") then
+
+                                current_s_goft%nr_modes = current_s_goft%nr_modes + 1
+                                current_s_goft%types(current_s_goft%nr_modes) = "BROWNIAN_LOW_TEMP_HIERARCHY"
+
+                                !
+                                ! Brownian parameters
+                                !
+                                if (nis_has_next()) then
+                                    call nis_next(err)
+                                    call print_error_message(err,"reading Brownian mode from NIS")
+                                    sz = nis_get_size()
+                                    if ((sz(1) /= 2).or.(sz(2) /= 1)) then
+                                        call print_error_message(-1,"Brownian mode from NIS - wrong rank")
+                                    end if
+                                    ALLOCATE(rbuff_v,(2))
                                     rbuff_v = nis_get_real(2)
                                     current_s_goft%params(1:2,current_s_goft%nr_modes) = rbuff_v
                                 else
@@ -816,7 +910,7 @@ contains
                                     if ((sz(1) /= 2).or.(sz(2) /= 1)) then
                                         call print_error_message(-1,"Gaussian mode from NIS - wrong rank")
                                     end if
-                                    allocate(rbuff_v(2))
+                                    ALLOCATE(rbuff_v,(2))
                                     rbuff_v = nis_get_real(2)
                                     current_s_goft%params(1:2,current_s_goft%nr_modes) = rbuff_v
                                 else
@@ -840,7 +934,7 @@ contains
                                     if ((sz(1) /= 1).or.(sz(2) /= 1)) then
                                         call print_error_message(-1,"Delta mode from NIS - wrong rank")
                                     end if
-                                    allocate(rbuff_v(1))
+                                    ALLOCATE(rbuff_v,(1))
                                     rbuff_v = nis_get_real(1)
                                     current_s_goft%params(1:1,current_s_goft%nr_modes) = rbuff_v
                                 else
@@ -864,7 +958,7 @@ contains
                                     if ((sz(1) /= 3).or.(sz(2) /= 1)) then
                                         call print_error_message(-1,"Brownian-general mode from NIS - wrong rank")
                                     end if
-                                    allocate(rbuff_v(3))
+                                    ALLOCATE(rbuff_v,(3))
                                     rbuff_v = nis_get_real(3)
                                     current_s_goft%params(1:3,current_s_goft%nr_modes) = rbuff_v
                                 else
@@ -888,7 +982,7 @@ contains
                                     if ((sz(1) /= 2).or.(sz(2) /= 1)) then
                                         call print_error_message(-1,"Brownian-underdamped mode from NIS - wrong rank")
                                     end if
-                                    allocate(rbuff_v(2))
+                                    ALLOCATE(rbuff_v,(2))
                                     rbuff_v = nis_get_real(2)
                                     current_s_goft%params(1:2,current_s_goft%nr_modes) = rbuff_v
                                 else
@@ -917,7 +1011,7 @@ contains
 
             else if (trim(caux) == "SECTION_DM_INITIAL_CONDITION") then
 
-            	allocate(ini_dm(current_s_block%N1,current_s_block%N1))
+            	ALLOCATE(ini_dm,(current_s_block%N1,current_s_block%N1))
 
             	ini_dm = 0.0d0
 
@@ -962,14 +1056,14 @@ contains
                         call print_error_message(err,"reading initial condition from NIS")
                         sz = nis_get_size()
 
-                        allocate(rbuff_v(sz(1)))
+                        ALLOCATE(rbuff_v,(sz(1)))
                         rbuff_v = nis_get_real(sz(1))
 
                         do i = 1, sz(1)
                         	ini_dm(i,i) = rbuff_v(i)
 						end do
 
-						deallocate(rbuff_v)
+						DEALLOCATE(rbuff_v)
 
                     else
                     	call print_error_message(-1,"Missing record at NIS (initial condition)")
@@ -985,14 +1079,14 @@ contains
                         call print_error_message(err,"reading initial condition from NIS")
                         sz = nis_get_size()
 
-                        allocate(rbuff_v(sz(1)))
+                        ALLOCATE(rbuff_v,(sz(1)))
                         rbuff_v = nis_get_real(sz(1))
 
                         do i = 1, sz(1)
                         	ini_dm(i,i) = ini_dm(i,i) + (0.0d0,1.0d0)*rbuff_v(i)
 						end do
 
-						deallocate(rbuff_v)
+						DEALLOCATE(rbuff_v)
 
                     else
                     	call print_error_message(-1,"Missing record at NIS (initial condition)")

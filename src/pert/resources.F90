@@ -49,30 +49,33 @@ module resources
     type site_block
         integer                                     :: id
 
-        real(dp), dimension(:), pointer          :: en     ! site energies
-        real(dp), dimension(:), pointer          :: en_orig     ! site energies without disorder
-        integer , dimension(:), pointer          :: gindex
-        integer,  dimension(:), pointer          :: dindex
-        real(dp), dimension(:,:), pointer          :: dwidth
-        real(dp), dimension(:), pointer          :: ll
-        real(dp), dimension(:), pointer          :: dx
-        real(dp), dimension(:), pointer          :: dy
-        real(dp), dimension(:), pointer          :: dz
-        real(dp), dimension(:), pointer          :: dd     ! transition dipole moment length
-        real(dp), dimension(:), pointer          :: rs     ! rotational strength
-        real(dp), dimension(:,:), pointer        :: rr     ! positions / or relaxation rates in case of inter block
-        real(dp), dimension(:,:), pointer        :: J      ! couplings between sites
-        real(dp), dimension(:,:,:), pointer 		:: Jcell  ! coupling to neighbouring cells
-        real(dp), dimension(:), pointer			:: cell_vec1
-        real(dp), dimension(:), pointer			:: cell_vec2
-        real(dp), dimension(:), pointer			:: cell_vec3
-        integer, pointer                          :: N1
+        real(dp), dimension(:), pointer          :: en => NULL()			! site energies
+        real(dp), dimension(:), pointer          :: en_orig => NULL()		! site energies without disorder
+        integer , dimension(:), pointer          :: gindex => NULL()
+        integer,  dimension(:), pointer          :: dindex => NULL()
+        real(dp), dimension(:,:), pointer          :: dwidth => NULL()
+        real(dp), dimension(:), pointer          :: ll => NULL()
+        real(dp), dimension(:,:), pointer        :: dx => NULL()
+        real(dp), dimension(:,:), pointer        :: dy => NULL()
+        real(dp), dimension(:,:), pointer        :: dz => NULL()
+        real(dp), dimension(:,:), pointer        :: dd => NULL()  	! transition dipole moment length
+        real(dp), dimension(:), pointer          :: rs => NULL()  	! rotational strength
+        real(dp), dimension(:,:), pointer        :: rr => NULL()  	! positions / or relaxation rates in case of inter block
+        real(dp), dimension(:,:), pointer        :: J => NULL()   	! couplings between sites
+        real(dp), dimension(:,:,:), pointer 		:: Jcell => NULL()	! coupling to neighbouring cells
+        real(dp), dimension(:), pointer			:: cell_vec1 => NULL()
+        real(dp), dimension(:), pointer			:: cell_vec2 => NULL()
+        real(dp), dimension(:), pointer			:: cell_vec3 => NULL()
+        integer, pointer                          :: N1 => NULL()
 		integer										:: periodic
 		integer										:: dimension
 		integer										:: periodicity
+		integer(i4b), dimension(:), pointer		:: QHO_lvls => NULL()	! number of levels
+		real(dp), dimension(:), pointer			:: QHO_freq => NULL()	! fundamental transition energy
+		real(dp), dimension(:), pointer			:: QHO_hrfact => NULL()
 
         integer                                     :: index
-        type(site_block), pointer                  :: next
+        type(site_block), pointer                  :: next => NULL()
 
     end type site_block
 
@@ -83,45 +86,46 @@ module resources
         integer                                  :: id
 
         ! single exicton part
-        integer, pointer                          :: N1      ! number of states
-        real(dp), dimension(:), pointer          :: en      ! excitonic energies
-        real(dp), dimension(:), pointer          :: dx
-        real(dp), dimension(:), pointer          :: dy
-        real(dp), dimension(:), pointer          :: dz
-        real(dp), dimension(:), pointer          :: dd
-        real(dp), dimension(:,:), pointer        :: SS
-        real(dp), dimension(:,:), pointer        :: S1
-        real(dp), dimension(:), pointer          :: rm      ! rotational strengths
-        real(dp), dimension(:,:), pointer        :: rr      ! relaxation rates
-        real(dp), dimension(:,:), pointer        :: dr      ! dephasing rates
-        real(dp), dimension(:), pointer          :: dr0     ! dephasing rates
-        complex(dpc), dimension(:,:), pointer    :: gg      ! excitonic g(t)
-        complex(dpc), dimension(:,:), pointer    :: cc      ! excitonic c(t)
-        real(dp), dimension(:), pointer          :: ll       ! reorganization energy
+        integer, pointer                          :: N1 => NULL()		! number of states
+        real(dp), dimension(:), pointer          :: eng => NULL()		! ground state energies
+        real(dp), dimension(:), pointer          :: en => NULL()		! excitonic energies
+        real(dp), dimension(:,:), pointer        :: dx => NULL()
+        real(dp), dimension(:,:), pointer        :: dy => NULL()
+        real(dp), dimension(:,:), pointer        :: dz => NULL()
+        real(dp), dimension(:,:), pointer        :: dd => NULL()
+        real(dp), dimension(:,:), pointer        :: SS => NULL()
+        real(dp), dimension(:,:), pointer        :: S1 => NULL()
+        real(dp), dimension(:), pointer          :: rm => NULL()		! rotational strengths
+        real(dp), dimension(:,:), pointer        :: rr => NULL()		! relaxation rates
+        real(dp), dimension(:,:), pointer        :: dr => NULL()		! dephasing rates
+        real(dp), dimension(:), pointer          :: dr0 => NULL()		! dephasing rates
+        complex(dpc), dimension(:,:), pointer    :: gg => NULL()		! excitonic g(t)
+        complex(dpc), dimension(:,:), pointer    :: cc => NULL()		! excitonic c(t)
+        real(dp), dimension(:), pointer          :: ll => NULL()		! reorganization energy
 
-        real(dp), dimension(:), pointer          :: fl_fac   ! steady state fluorescence factors
+        real(dp), dimension(:), pointer          :: fl_fac => NULL()	! steady state fluorescence factors
 
         ! related to two-excitons
-        logical, pointer                           :: use_twoexcitons  !
-        integer, pointer                           :: N2        ! x
-        real(dp), dimension(:), pointer          :: en_2      ! excitonic energies, x
-        real(dp), dimension(:,:), pointer        :: dx_2      !
-        real(dp), dimension(:,:), pointer        :: dy_2      !
-        real(dp), dimension(:,:), pointer        :: dz_2      !
-        real(dp), dimension(:,:), pointer        :: dd_2      !
-        real(dp), dimension(:,:), pointer        :: SS_2      ! x
-        real(dp), dimension(:,:), pointer        :: S1_2      !  x
-        real(dp), dimension(:), pointer          :: drfe      ! dephasing rates
-        complex(dpc), dimension(:,:,:), pointer    :: gg_2      ! excitonic g(t)
-        complex(dpc), dimension(:,:,:), pointer    :: cc_2      ! excitonic c(t)
-        complex(dpc), dimension(:,:,:), pointer     :: gg_21
-        real(dp), dimension(:), pointer          :: ll_2       ! reorganization energy
-        integer, dimension(:,:), pointer         :: itwo      ! x
-        integer, dimension(:), pointer           :: ione1     ! x
-        integer, dimension(:), pointer           :: ione2     ! x
+        logical, pointer                           :: use_twoexcitons => NULL()  !
+        integer, pointer                           :: N2 => NULL()        ! x
+        real(dp), dimension(:), pointer          :: en_2 => NULL()      ! excitonic energies, x
+        real(dp), dimension(:,:), pointer        :: dx_2 => NULL()      !
+        real(dp), dimension(:,:), pointer        :: dy_2 => NULL()      !
+        real(dp), dimension(:,:), pointer        :: dz_2 => NULL()      !
+        real(dp), dimension(:,:), pointer        :: dd_2 => NULL()      !
+        real(dp), dimension(:,:), pointer        :: SS_2 => NULL()      ! x
+        real(dp), dimension(:,:), pointer        :: S1_2 => NULL()      !  x
+        real(dp), dimension(:), pointer          :: drfe => NULL()      ! dephasing rates
+        complex(dpc), dimension(:,:,:), pointer    :: gg_2 => NULL()      ! excitonic g(t)
+        complex(dpc), dimension(:,:,:), pointer    :: cc_2 => NULL()      ! excitonic c(t)
+        complex(dpc), dimension(:,:,:), pointer     :: gg_21 => NULL()
+        real(dp), dimension(:), pointer          :: ll_2 => NULL()       ! reorganization energy
+        integer, dimension(:,:), pointer         :: itwo => NULL()      ! x
+        integer, dimension(:), pointer           :: ione1 => NULL()     ! x
+        integer, dimension(:), pointer           :: ione2 => NULL()     ! x
 
         integer                                    :: index
-        type(exciton_block), pointer              :: next
+        type(exciton_block), pointer              :: next => NULL()
 
     end type exciton_block
 
@@ -134,24 +138,24 @@ module resources
 
     ! matrix of blocks
     type site_block_matrix
-        type(site_block)   , pointer :: sblock
-        type(exciton_block), pointer :: eblock
+        type(site_block)   , pointer :: sblock => NULL()
+        type(exciton_block), pointer :: eblock => NULL()
     end type
 
-    type(site_block_matrix), dimension(:,:), pointer :: iblocks
+    type(site_block_matrix), dimension(:,:), pointer :: iblocks => NULL()
 
     ! matrix of block evolution operators
     type block_ev_sop
-        complex(dpc), dimension(:,:,:,:,:), pointer :: Ugg
-        complex(dpc), dimension(:,:,:,:,:), pointer :: Uee
-        complex(dpc), dimension(:,:,:,:,:), pointer :: Uff
-        complex(dpc), dimension(:,:,:,:,:), pointer :: Ueg
-        complex(dpc), dimension(:,:,:,:,:), pointer :: Ufe
-        complex(dpc), dimension(:,:,:,:,:), pointer :: Ufg
-        complex(dpc), dimension(:,:,:), pointer :: UfeS   ! secular version
+        complex(dpc), dimension(:,:,:,:,:), pointer :: Ugg => NULL()
+        complex(dpc), dimension(:,:,:,:,:), pointer :: Uee => NULL()
+        complex(dpc), dimension(:,:,:,:,:), pointer :: Uff => NULL()
+        complex(dpc), dimension(:,:,:,:,:), pointer :: Ueg => NULL()
+        complex(dpc), dimension(:,:,:,:,:), pointer :: Ufe => NULL()
+        complex(dpc), dimension(:,:,:,:,:), pointer :: Ufg => NULL()
+        complex(dpc), dimension(:,:,:), pointer :: UfeS => NULL()	! secular version
     end type
 
-    type(block_ev_sop), dimension(:,:), pointer :: evops
+    type(block_ev_sop), dimension(:,:), pointer :: evops => NULL()
 
     !
     ! Correlation function and the line shape function of a site
@@ -159,12 +163,12 @@ module resources
     type site_goft
         integer                                      :: id
         integer                                      :: nr_modes
-        character(len=32), dimension(:), pointer :: types
+        character(len=32), dimension(:), pointer :: types => NULL()
         real(dp)                                     :: lambda  ! total reorganization energy
-        real(dp), dimension(:,:), pointer         :: params
-        complex(dpc), dimension(:), pointer       :: gt      ! g(t)
-        complex(dpc), dimension(:), pointer       :: ct      ! correlation function
-        complex(dpc), dimension(:), pointer       :: ht      ! g dot of t
+        real(dp), dimension(:,:), pointer         :: params => NULL()
+        complex(dpc), dimension(:), pointer       :: gt => NULL()	! g(t)
+        complex(dpc), dimension(:), pointer       :: ct => NULL()	! correlation function
+        complex(dpc), dimension(:), pointer       :: ht => NULL()	! g dot of t
         integer                                      :: index
         type(site_goft), pointer                    :: next
     end type site_goft
@@ -182,9 +186,9 @@ module resources
     ! type representing the whole resources
     !*****************************************************************
     type rsrcs
-        type(site_block_matrix), pointer    :: blocks   ! blocks
-        type(site_goft_vector), pointer     :: gofts    ! g(t)s
-        type(block_ev_sop), pointer         :: evops    ! evolution operators
+        type(site_block_matrix), pointer    :: blocks => NULL()	! blocks
+        type(site_goft_vector), pointer     :: gofts => NULL()		! g(t)s
+        type(block_ev_sop), pointer         :: evops => NULL()		! evolution operators
 
         character(len=64)                   :: modname
         real(dp)                             :: temp
@@ -265,6 +269,7 @@ module resources
 
     logical :: use_twoexcitons
     logical :: read_external_evops
+    logical :: special_carotenoid_hack = .false.
 
 
     !****************************************************************
@@ -282,27 +287,27 @@ module resources
     !
     ! Complete information about all blocks present in the input
     !
-    type(site_block), pointer              :: current_s_block
-    type(site_goft), pointer               :: current_s_goft
+    type(site_block), pointer              :: current_s_block => NULL()
+    type(site_goft), pointer               :: current_s_goft => NULL()
 
     ! interblock is a site block containing only coupling
-    type(site_block), pointer              :: current_i_block
+    type(site_block), pointer              :: current_i_block => NULL()
 
-    integer, pointer                        :: N1
-    real(dp), dimension(:), pointer        :: en
-    real(dp), dimension(:), pointer        :: dx
-    real(dp), dimension(:), pointer        :: dy
-    real(dp), dimension(:), pointer        :: dz
-    real(dp), dimension(:,:), pointer      :: rr
-    real(dp), dimension(:,:), pointer      :: dr
-    real(dp), dimension(:), pointer        :: dr0
-    real(dp), dimension(:,:), pointer      :: SS
-    real(dp), dimension(:,:), pointer      :: S1
-    real(dp), dimension(:,:), pointer      :: jj
-    complex(dp), dimension(:,:), pointer  :: gg
-    complex(dp), dimension(:,:), pointer  :: cc
-    real(dp), dimension(:), pointer        :: ll
-    real(dp), dimension(:), pointer        :: rm
+    integer, pointer                        :: N1 => NULL()
+    real(dp), dimension(:), pointer        :: en => NULL()
+    real(dp), dimension(:,:), pointer      :: dx => NULL()
+    real(dp), dimension(:,:), pointer      :: dy => NULL()
+    real(dp), dimension(:,:), pointer      :: dz => NULL()
+    real(dp), dimension(:,:), pointer      :: rr => NULL()
+    real(dp), dimension(:,:), pointer      :: dr => NULL()
+    real(dp), dimension(:), pointer        :: dr0 => NULL()
+    real(dp), dimension(:,:), pointer      :: SS => NULL()
+    real(dp), dimension(:,:), pointer      :: S1 => NULL()
+    real(dp), dimension(:,:), pointer      :: jj => NULL()
+    complex(dp), dimension(:,:), pointer  :: gg => NULL()
+    complex(dp), dimension(:,:), pointer  :: cc => NULL()
+    real(dp), dimension(:), pointer        :: ll => NULL()
+    real(dp), dimension(:), pointer        :: rm => NULL()
     character(len=12)                       :: erepre
 
 
@@ -346,7 +351,7 @@ module resources
     !
     ! Complete information about all blocks in eigen representation
     !
-    type(exciton_block), pointer         :: current_e_block
+    type(exciton_block), pointer         :: current_e_block => NULL()
 
 
 
@@ -366,10 +371,10 @@ module resources
     !****************************************************************
     ! Management variables
     !****************************************************************
-    type(site_block), pointer, private    :: root_s_block
-    type(site_block), pointer, private    :: root_i_block
-    type(exciton_block), pointer, private :: root_e_block
-    type(site_goft), pointer, private     :: root_s_goft
+    type(site_block), pointer, private    :: root_s_block => NULL()
+    type(site_block), pointer, private    :: root_i_block => NULL()
+    type(exciton_block), pointer, private :: root_e_block => NULL()
+    type(site_goft), pointer, private     :: root_s_goft => NULL()
     integer, parameter,private            :: MAX_NR_GOFT_MODES  = 20
     integer, parameter,private            :: MAX_NR_MODE_PARAMS = 4
 
@@ -472,7 +477,7 @@ contains
         !
         ! Set the number of sites in each block
         !
-        allocate(NN(nr_blocks))
+        ALLOCATE(NN,(nr_blocks))
 
         call resources_rewind_blocks()
         do
@@ -498,13 +503,15 @@ contains
         !
         ! Initialization of usefull constants
         !
-        allocate(Block_Sizes(nr_blocks))
-        allocate(Block_Sizes_Added(nr_blocks),Block_Sizes_Previous(nr_blocks))
-        allocate(N_Excitons(nr_blocks))
-        allocate(N_Excitons_Added(nr_blocks), N_Excitons_Previous(nr_blocks))
-        allocate(N_ExOrder(nr_blocks,Exciton_Order))
-        allocate(N_ExOrder_Added(nr_blocks,Exciton_Order), &
-                 N_ExOrder_Previous(nr_blocks,Exciton_Order))
+        ALLOCATE(Block_Sizes,(nr_blocks))
+        ALLOCATE(Block_Sizes_Added,(nr_blocks))
+        ALLOCATE(Block_Sizes_Previous,(nr_blocks))
+        ALLOCATE(N_Excitons,(nr_blocks))
+        ALLOCATE(N_Excitons_Added,(nr_blocks))
+        ALLOCATE(N_Excitons_Previous,(nr_blocks))
+        ALLOCATE(N_ExOrder,(nr_blocks,Exciton_Order))
+        ALLOCATE(N_ExOrder_Added,(nr_blocks,Exciton_Order))
+        ALLOCATE(N_ExOrder_Previous,(nr_blocks,Exciton_Order))
         do i = 1, nr_blocks
             Block_Sizes(i) = NN(i)
             N_ExOrder(i,1) = NN(i)
@@ -533,7 +540,7 @@ contains
             end if
         end do
 
-        allocate(nmax(nr_blocks))
+        ALLOCATE(nmax,(nr_blocks))
         nma = 0
         do i=1,nr_blocks
             nma=nma+N_ExOrder_Previous(i,1)*(N_ExOrder_Previous(i,2)+1)
@@ -541,12 +548,10 @@ contains
         end do
 
         if (.not.allocated(mun)) then
-           allocate(mun(nmax(nr_blocks)+N_ExOrder(nr_blocks,1) &
-           *(N_ExOrder(nr_blocks,2)+1),3))
+           ALLOCATE(mun,(nmax(nr_blocks)+N_ExOrder(nr_blocks,1)*(N_ExOrder(nr_blocks,2)+1),3))
         end if
         if (.not.allocated(munS)) then
-           allocate(munS(nmax(nr_blocks)+N_ExOrder(nr_blocks,1) &
-           *(N_ExOrder(nr_blocks,2)+1),3))
+           ALLOCATE(munS,(nmax(nr_blocks)+N_ExOrder(nr_blocks,1)*(N_ExOrder(nr_blocks,2)+1),3))
         end if
 
         !
@@ -895,11 +900,11 @@ contains
             if (associated(current_e_block%gg)) then
 
 
-                deallocate(current_e_block%gg)
-                deallocate(current_e_block%dx)
-                deallocate(current_e_block%dd)
-                deallocate(current_e_block%dy)
-                deallocate(current_e_block%dz)
+                DEALLOCATE(current_e_block%gg)
+                DEALLOCATE(current_e_block%dx)
+                DEALLOCATE(current_e_block%dd)
+                DEALLOCATE(current_e_block%dy)
+                DEALLOCATE(current_e_block%dz)
                 !call deallocate_pointer(current_e_block%en)
                 DEALLOCATE(current_e_block%en)
                 !call deallocate_pointer(current_e_block%SS)

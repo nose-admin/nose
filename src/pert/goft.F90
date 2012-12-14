@@ -9,8 +9,8 @@ module goft
     ! Brownian
     character(len=32), parameter :: MT_0 = "BROWNIAN"                   ! implemented
     character(len=32), parameter :: MT_1 = "BROWNIAN_GENERAL"
-    character(len=32), parameter :: MT_2 = "BROWNIAN_OVERDUMPED"
-    character(len=32), parameter :: MT_3 = "BROWNIAN_UNDERDUMPED"
+    character(len=32), parameter :: MT_2 = "BROWNIAN_OVERDAMPED"
+    character(len=32), parameter :: MT_3 = "BROWNIAN_UNDERDAMPED"
 
     ! Delta correlated
     character(len=32), parameter :: MT_4 = "DELTA"                      ! implemented
@@ -24,19 +24,22 @@ module goft
     character(len=32), parameter :: MT_51 = "RENGER_BCHL"
 
     type pag
-        complex(dpc), dimension(:), pointer :: gg
+        complex(dpc), dimension(:), pointer :: gg => NULL()
     end type
 
-    type(pag), dimension(:), pointer :: all_goft
-    type(pag), dimension(:), pointer :: all_coft
-    type(pag), dimension(:), pointer :: all_hoft
+    type(pag), dimension(:), pointer :: all_goft => NULL()
+    type(pag), dimension(:), pointer :: all_coft => NULL()
+    type(pag), dimension(:), pointer :: all_hoft => NULL()
 
     !private :: pag, all_goft, all_coft
     private::brownian_general
     private::brownian
     private::brownian_underdamped
+    private::brownian_no_matsubara
+    private::brownian_low_temp_hierarchy
     private::deltacf
     private::dimensionless_CC
+    private::dimensionless_CC_LTH
     public::ctanh
 
 	logical :: g21_allocated, g2_allocated
@@ -345,9 +348,9 @@ contains
         ll = 0.0_dp
 
         if (.not.associated(ggt)) then
-            allocate(ggt(grid_Nt))
-            allocate(cct(grid_Nt))
-            allocate(hht(grid_Nt))
+            ALLOCATE(ggt,(grid_Nt))
+            ALLOCATE(cct,(grid_Nt))
+            ALLOCATE(hht,(grid_Nt))
             ggt = 0.0_dp
             cct = 0.0_dp
             hht = 0.0_dp
@@ -362,6 +365,16 @@ contains
             if (trim(tp(i)) == "BROWNIAN") then
 
                 call brownian(params(1:2,i),ggt,cct,hht,ll,ADD="yes")
+                lambda = lambda + ll
+
+            else if (trim(tp(i)) == "BROWNIAN_NO_MATSUBARA") then
+
+                call brownian_no_matsubara(params(1:2,i),ggt,cct,hht,ll,ADD="yes")
+                lambda = lambda + ll
+
+            else if (trim(tp(i)) == "BROWNIAN_LOW_TEMP_HIERARCHY") then
+
+                call brownian_low_temp_hierarchy(params(1:2,i),ggt,cct,hht,ll,ADD="yes")
                 lambda = lambda + ll
 
             else if (trim(tp(i)) == "DELTA") then
@@ -401,7 +414,7 @@ contains
         ! local
         integer :: i
         character(len=10) :: cbuff
-        complex(dpc), dimension(:), pointer :: gg
+        complex(dpc), dimension(:), pointer :: gg => NULL()
 
         gg => goft%gt
 
@@ -425,7 +438,7 @@ contains
         ! local
         integer :: i
         character(len=10) :: cbuff
-        complex(dpc), dimension(:), pointer :: gg
+        complex(dpc), dimension(:), pointer :: gg => NULL()
 
         gg => goft%ht
 
@@ -449,7 +462,7 @@ contains
         ! local
         integer :: i
         character(len=10) :: cbuff
-        complex(dpc), dimension(:), pointer :: gg
+        complex(dpc), dimension(:), pointer :: gg => NULL()
 
         gg => goft%ct
 
@@ -665,9 +678,8 @@ contains
 		nav = (exp(x)-exp(-x))/(exp(x)+exp(-x))
 	end function ctanh
 
-
     !
-    ! Dimensionless brownian overdumped CC(T,x),
+    ! Dimensionless brownian overdamped CC(T,x),
     !    x = beta hbar Lambda/2
     !    T = 2 t / beta hbar
     !    C(Lambda, ll, t) = Lambda ll CC(T,x)
@@ -756,7 +768,6 @@ contains
 			call print_log_message(trim(buff),7)
 		end if
 
-
 	end function dimensionless_CC
 
 	subroutine brownian(params,ggt,cct,hht,lambda,ADD)
@@ -819,9 +830,129 @@ contains
 !    	write(*,*) 'debug functions written'
 !    	stop
 
-
 	end subroutine brownian
 
+	subroutine brownian_no_matsubara(params,ggt,cct,hht,lambda,ADD)
+        real(dp), dimension(:), intent(in)		:: params
+        complex(dpc), dimension(:), pointer		:: ggt
+        complex(dpc), dimension(:), pointer		:: cct,hht
+        real(dp), intent(out)						:: lambda
+        character(len=*), intent(in), optional	:: ADD
+
+        complex(dpc), dimension(size(ggt))	:: cct_tmp,hht_tmp,ggt_tmp
+        real(dp)								:: BH, LLambda,t
+        integer(i4b)							:: Ntt, i
+
+        !
+        ! Set evaluation parameters
+        !
+        lambda 	= params(1)
+        LLambda 	= 1.0_dp/params(2)
+
+        ! dt ... elementary grid step
+
+        Ntt = size(ggt)
+
+        BH = (0.6582120_dp/8.617385d-5)/temp  ! hbar/kT
+
+        do i=1, Ntt
+        	t = (i-1)*dt
+
+	        cct_tmp(i) = lambda*LLambda*&
+	        	exp(-(2.0*t/BH)*(BH*LLambda/2.0))*(1.0_dp/tan(BH*LLambda/2.0) - cmplx(0,1,dpc))
+	        if(i > 1) then
+    	    	hht_tmp(i) = hht_tmp(i-1) + dt*cct_tmp(i)
+        		ggt_tmp(i) = ggt_tmp(i-1) + dt*hht_tmp(i)
+        	else
+    	    	hht_tmp(i) = dt*cct_tmp(i)
+        		ggt_tmp(i) = dt*hht_tmp(i)
+        	end if
+        end do
+
+    	! write to global functions
+        if (.not. present(ADD)) then
+   	    	ggt = 0.0_dp
+       		cct = 0.0_dp
+       		hht = 0.0_dp
+        end if
+
+	   	do i=1,Ntt
+        	cct(i) = cct_tmp(i) + cct(i)
+    	    hht(i) = hht_tmp(i) + hht(i)
+        	ggt(i) = ggt_tmp(i) + ggt(i)
+    	end do
+
+	end subroutine brownian_no_matsubara
+
+    !
+    ! Dimensionless brownian overdamped CC(T,x) with approximation from
+    !                    Ishizaki-Fleming PNAS (2009), 106, 17255, formula A2
+    !    x = beta hbar Lambda/2
+    !    T = 2 t / beta hbar
+    !    C(Lambda, ll, t) = Lambda ll CC(T,x)
+    function dimensionless_CC_LTH(T,x) result(CC)
+        real(dp), intent(in)        :: x, T
+        complex(dpc)                :: CC
+
+        real(dp)                         :: diff
+        integer(i4b)                   :: i
+        character(len=256)      :: buff
+
+        CC =      exp(-T*x)*((3*x*x - PI_D * PI_D)/(x*x*x - x*PI_D*PI_D)     -     cmplx(0,1,dpc))
+
+    end function dimensionless_CC_LTH
+
+    subroutine brownian_low_temp_hierarchy(params,ggt,cct,hht,lambda,ADD)
+        real(dp), dimension(:), intent(in)      :: params
+        complex(dpc), dimension(:), pointer     :: ggt
+        complex(dpc), dimension(:), pointer     :: cct,hht
+        real(dp), intent(out)                       :: lambda
+        character(len=*), intent(in), optional  :: ADD
+
+        complex(dpc), dimension(size(ggt))  :: cct_tmp,hht_tmp,ggt_tmp
+        real(dp)                                :: BH, LLambda,t
+        integer(i4b)                            :: Ntt, i
+
+        !
+        ! Set evaluation parameters
+        !
+        lambda  = params(1)
+        LLambda     = 1.0_dp/params(2)
+
+        Ntt = size(ggt)
+
+        BH = (0.6582120_dp/8.617385d-5)/temp  ! hbar/kT
+
+        do i=1, Ntt
+            t = (i-1)*dt
+
+            cct_tmp(i) = lambda*LLambda*dimensionless_CC_LTH(2.0*t/BH, BH*LLambda/2.0)
+            if(i > 1) then
+                hht_tmp(i) = hht_tmp(i-1) + dt*cct_tmp(i)
+                ggt_tmp(i) = ggt_tmp(i-1) + dt*hht_tmp(i)
+            else
+                hht_tmp(i) = dt*cct_tmp(i)
+                ggt_tmp(i) = dt*hht_tmp(i)
+            end if
+
+            ! delta-function part of the CF
+            hht_tmp(i) = hht_tmp(i) + lambda*LLambda*2/(PI_D*PI_D - (BH*LLambda/2.0)*(BH*LLambda/2.0))
+            ggt_tmp(i) = ggt_tmp(i) + lambda*LLambda*2/(PI_D*PI_D - (BH*LLambda/2.0)*(BH*LLambda/2.0))*t
+        end do
+
+        ! write to global functions
+        if (.not. present(ADD)) then
+            ggt = 0.0_dp
+            cct = 0.0_dp
+            hht = 0.0_dp
+        end if
+
+        do i=1,Ntt
+            cct(i) = cct_tmp(i) + cct(i)
+            hht(i) = hht_tmp(i) + hht(i)
+            ggt(i) = ggt_tmp(i) + ggt(i)
+        end do
+    end subroutine brownian_low_temp_hierarchy
 
 	subroutine brownian_underdamped(params,ggt,cct,hht,lambda,ADD)
         real(dp), dimension(:), intent(in)		:: params

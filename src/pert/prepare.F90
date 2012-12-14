@@ -51,7 +51,7 @@ contains
 
             ! set values (reorganization energy etc.)
             allocate(current_s_block%ll(N1))
-            allocate(current_s_block%dd(N1))
+            allocate(current_s_block%dd(N1,1))
 
             !print *, "N1 = ", N1
 
@@ -59,9 +59,9 @@ contains
                 ! set ll
                ! print *, "current_s_block%gindex(i) ", i, current_s_block%gindex(i)
                 current_s_block%ll(i) = ll(current_s_block%gindex(i))
-                current_s_block%dd(i) = sqrt(current_s_block%dx(i)**2 + &
-                                             current_s_block%dy(i)**2 + &
-                                             current_s_block%dz(i)**2)
+                current_s_block%dd(i,1) = sqrt(current_s_block%dx(i,1)**2 + &
+                                             current_s_block%dy(i,1)**2 + &
+                                             current_s_block%dz(i,1)**2)
             end do
 
             if (.not.resources_have_next_block()) exit
@@ -73,6 +73,7 @@ contains
 
         call init_excitons(err)
         call init_orfact()
+        write(*,*) 'orfact prepare'
 
         ! set block storage
         allocate(iblocks(nr_blocks,nr_blocks))
@@ -167,6 +168,7 @@ contains
 
         call update_excitons(err)
         call init_orfact()
+        write(*,*) 'orfact prepare for one'
 
 
     end subroutine prepare_for_one
