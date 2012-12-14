@@ -803,7 +803,8 @@ contains
                             !       BROWNIAN
                             !       BROWNIAN_GENERAL
                             !       BROWNIAN_UNDERDAMPED
-                            !		BROWNIAN_NO_MATSUBARA
+                            !       BROWNIAN_NO_MATSUBARA
+                            !       BROWNIAN_LOW_TEMP_HIERARCHY
                             !       DELTA
                             !       GAUSSIAN
                             !
@@ -849,6 +850,30 @@ contains
 
                                 current_s_goft%nr_modes = current_s_goft%nr_modes + 1
                                 current_s_goft%types(current_s_goft%nr_modes) = "BROWNIAN_NO_MATSUBARA"
+
+                                !
+                                ! Brownian parameters
+                                !
+                                if (nis_has_next()) then
+                                    call nis_next(err)
+                                    call print_error_message(err,"reading Brownian mode from NIS")
+                                    sz = nis_get_size()
+                                    if ((sz(1) /= 2).or.(sz(2) /= 1)) then
+                                        call print_error_message(-1,"Brownian mode from NIS - wrong rank")
+                                    end if
+                                    ALLOCATE(rbuff_v,(2))
+                                    rbuff_v = nis_get_real(2)
+                                    current_s_goft%params(1:2,current_s_goft%nr_modes) = rbuff_v
+                                else
+                                    call print_error_message(-1,"Missing record at NIS (Brownian mode)")
+                                end if
+                                write(cbuff,'(a,2f18.12)') "Brownian mode parameters ", rbuff_v
+                                call print_log_message(trim(cbuff),7)
+
+                            else if (trim(caux) == "BROWNIAN_LOW_TEMP_HIERARCHY") then
+
+                                current_s_goft%nr_modes = current_s_goft%nr_modes + 1
+                                current_s_goft%types(current_s_goft%nr_modes) = "BROWNIAN_LOW_TEMP_HIERARCHY"
 
                                 !
                                 ! Brownian parameters
