@@ -900,6 +900,9 @@ contains
 
         CC =      exp(-T*x)*((3*x*x - PI_D * PI_D)/(x*x*x - x*PI_D*PI_D)     -     cmplx(0,1,dpc))
 
+        ! first non-delta matsubara term
+        CC = CC + exp(- PI_D*T)*(1.0_dp/(x+PI_D)-1.0_dp/(x-PI_D))
+
     end function dimensionless_CC_LTH
 
     subroutine brownian_low_temp_hierarchy(params,ggt,cct,hht,lambda,ADD)
@@ -936,8 +939,8 @@ contains
             end if
 
             ! delta-function part of the CF
-            hht_tmp(i) = hht_tmp(i) + lambda*LLambda*2/(PI_D*PI_D - (BH*LLambda/2.0)*(BH*LLambda/2.0))
-            ggt_tmp(i) = ggt_tmp(i) + lambda*LLambda*2/(PI_D*PI_D - (BH*LLambda/2.0)*(BH*LLambda/2.0))*t
+            !hht_tmp(i) = hht_tmp(i) + lambda*LLambda*2/(PI_D*PI_D - (BH*LLambda/2.0)*(BH*LLambda/2.0))
+            !ggt_tmp(i) = ggt_tmp(i) + lambda*LLambda*2/(PI_D*PI_D - (BH*LLambda/2.0)*(BH*LLambda/2.0))*t
         end do
 
         ! write to global functions
