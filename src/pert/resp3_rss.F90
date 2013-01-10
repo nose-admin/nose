@@ -7,12 +7,12 @@ module resp3_rss
     real(dp), dimension(:,:), allocatable :: oeg,ofe             ! transition frequencies
     real(dp), dimension(:),   allocatable :: pp                  ! equilibrium populations
 
-    complex(dpc), dimension(:,:,:,:,:), pointer :: Ugege
-    complex(dpc), dimension(:,:,:,:,:), pointer :: Uegeg
-    complex(dpc), dimension(:,:,:,:,:), pointer :: Ueeee
-    complex(dpc), dimension(:,:,:,:,:), pointer :: Ugggg
-    complex(dpc), dimension(:,:,:,:,:), pointer :: Ufefe
-    complex(dpc), dimension(:,:,:,:,:), pointer :: Uefef
+    complex(dpc), dimension(:,:,:,:,:), pointer :: Ugege => NULL()
+    complex(dpc), dimension(:,:,:,:,:), pointer :: Uegeg => NULL()
+    complex(dpc), dimension(:,:,:,:,:), pointer :: Ueeee => NULL()
+    complex(dpc), dimension(:,:,:,:,:), pointer :: Ugggg => NULL()
+    complex(dpc), dimension(:,:,:,:,:), pointer :: Ufefe => NULL()
+    complex(dpc), dimension(:,:,:,:,:), pointer :: Uefef => NULL()
 
 
     complex(dpc), dimension(:,:), allocatable :: R1g0, R2g0, R3g0, R4g0

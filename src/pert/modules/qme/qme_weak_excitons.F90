@@ -44,7 +44,7 @@ contains
 			allocate(dd(N1))
 			Nrm = 0.0_dp
 			do i = 1, N1
-			   dd(i) = dx(i)*dx(i) + dy(i)*dy(i) + dz(i)*dz(i)
+			   dd(i) = dx(i,1)*dx(i,1) + dy(i,1)*dy(i,1) + dz(i,1)*dz(i,1)
 			   Nrm = Nrm + dd(i)	   ! Normalisation
 			end do
 			allocate(rho(N1),drho(N1))

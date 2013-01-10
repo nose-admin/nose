@@ -120,6 +120,9 @@ module qme_nakajima_zwanzig
 	private::fill_superoperator_R_tau_addition
 	private::calculate_derivative_red_tau
 	public::write_redfield_tensor2
+	public::write_corf
+
+	private::fill_vibrational_levels
 
 	! funkce pocitajici rovnou Lambda(w)
 	!private::fill_c_w
@@ -373,6 +376,7 @@ module qme_nakajima_zwanzig
 
 			if(type == 'E') then
 				to(:,:,i) = matmul(matmul(Ue_exc,exc1(ind)%K_exc),Ue1_exc)
+				!to(:,:,i) = exc1(ind)%K_exc
 
 				if(i == 1) then ! correlation fction has 0 imaginary part at t = 0
  					to(:,:,i) = to(:,:,i)*real(igofts(iblocks(1,1)%sblock%gindex(ind))%goft%ct(i))
@@ -382,6 +386,7 @@ module qme_nakajima_zwanzig
 
 			else if(type == 'F') then
 				to(:,:,i) = matmul(matmul(Ue_exc,exc2(ind)%K_2_exc),Ue1_exc)
+				!to(:,:,i) = exc2(ind)%K_2_exc
 
 				if(i == 1) then ! correlation fction has 0 imaginary part at t = 0
 					to(:,:,i) = to(:,:,i)*real(igofts(iblocks(1,1)%sblock%gindex(ind1))%goft%ct(i) + igofts(iblocks(1,1)%sblock%gindex(ind2))%goft%ct(i))
@@ -1421,6 +1426,7 @@ module qme_nakajima_zwanzig
 
 		if(global_type == 'O' .and. .not. Redfield_printed) then
 			call write_redfield_tensor2('O')
+			call write_corf()
 			Redfield_printed = .true.
 			write(*,*) 'Redfield printed'
 		end if
@@ -2089,6 +2095,134 @@ module qme_nakajima_zwanzig
 
 		DEALLOCATE(Rdf)
 	end subroutine write_redfield_tensor2
+
+	!*************************************************************
+	!  Writing out CF
+	!*************************************************************
+
+	subroutine write_corf()
+		integer	(i4b)		:: i,j, t_index
+		integer(i4b)		:: Uelement
+		character(len=4)	:: no1,no2,no3,no4
+		character(len=100)	:: name
+		character(len=50)	:: prefix
+
+
+		do Uelement=1,N1_from_type('E')
+
+
+		if(Uelement < 10) then
+			write(no1,'(i1)')	Uelement
+		else if (Uelement < 100) then
+			write(no1,'(i2)')	Uelement
+		else
+			write(no1,'(i3)')	Uelement
+		endif
+
+		prefix = 'CF'
+		name = trim(prefix) // trim(no1) // '.dat'
+
+		open(UNIT=22, FILE = trim(file_join(out_dir,trim(name))))
+
+		do i=1,grid_Nt,gt(1)
+			write(22,*) dt*(i-1),' ',real(igofts(iblocks(1,1)%sblock%gindex(Uelement))%goft%ct(i)), aimag(igofts(iblocks(1,1)%sblock%gindex(Uelement))%goft%ct(i))
+		end do
+
+		close(UNIT=22)
+
+		end do
+
+	end subroutine write_corf
+
+	subroutine fill_vibrational_levels(type)
+		character, intent(in) :: type
+		integer	(i4b)		:: i,j, t_index
+		integer(i4b)		:: Uelement, Uelement2,Utnemele,Utnemele2, Ublock
+		character(len=4)	:: no1,no2,no3,no4
+		character(len=100)	:: name
+		character(len=50)	:: prefix
+		complex(dpc), dimension(:,:,:,:,:), pointer		:: actual_U => NULL()
+		complex(dpc), dimension(:,:,:,:,:), allocatable	:: Rdf
+		complex(dpc), dimension(N1_from_type(type)*N2_from_type(type),N1_from_type(type)*N2_from_type(type))	:: Rdf_2ind
+
+		Ublock = 1
+
+		! We set indices range according to block we evaluate. Because rho0 is
+		! whole density matrix, while evolution operators are only from particular
+		! block, offset is set between these indices.
+		if (type == '2') then
+			actual_U => evops(Ublock,Ublock)%Ufe
+			prefix = 'Redf2_fe'
+		else if (type == 'E') then
+			actual_U => evops(Ublock,Ublock)%Uee
+			prefix = 'Redf2_ee'
+		else if (type == 'O') then
+			actual_U => evops(Ublock,Ublock)%Ueg
+			prefix = 'Redf2_eg'
+		end if
+
+		ALLOCATE(Rdf,(size(actual_U,1),size(actual_U,2),size(actual_U,3),size(actual_U,4),size(actual_U,5) ) )
+
+		do t_index=1, size(actual_U,5)
+			call fill_superoperator_R(Rdf_2ind, t_index*gt(1), type)
+			call superops_2indexed_to_4indexed(Rdf_2ind, Rdf(:,:,:,:,t_index), type)
+		end do
+
+		do Uelement=1,N1_from_type(type)
+		do Uelement2=1,N2_from_type(type)
+		do Utnemele=1,N1_from_type(type)
+		do Utnemele2=1,N2_from_type(type)
+
+
+		if(Uelement < 10) then
+			write(no1,'(i1)')	Uelement
+		else if (Uelement < 100) then
+			write(no1,'(i2)')	Uelement
+		else
+			write(no1,'(i3)')	Uelement
+		endif
+		if(Uelement2 < 10) then
+			write(no2,'(i1)')	Uelement2
+		else if (Uelement2 < 100) then
+			write(no2,'(i2)')	Uelement2
+		else
+			write(no2,'(i3)')	Uelement2
+		endif
+		if(Utnemele < 10) then
+			write(no3,'(i1)')	Utnemele
+		else if (Uelement2 < 100) then
+			write(no3,'(i2)')	Utnemele
+		else
+			write(no3,'(i3)')	Utnemele
+		endif
+		if(Utnemele2 < 10) then
+			write(no4,'(i1)')	Utnemele2
+		else if (Uelement2 < 100) then
+			write(no4,'(i2)')	Utnemele2
+		else
+			write(no4,'(i3)')	Utnemele2
+		endif
+
+		name = trim(prefix) // trim(no1) // '-'//trim(no2)//'--'// trim(no3) // '-'//trim(no4)//'.dat'
+
+		open(UNIT=22, FILE = trim(file_join(out_dir,trim(name))))
+
+		i = 1
+		do while (i <= size(actual_U,5))
+			write(22,*) gt(1)*dt*(i-1),' ',real(Rdf(Uelement,Uelement2,Utnemele,Utnemele2,i)),' ',aimag(Rdf(Uelement,Uelement2,Utnemele,Utnemele2,i))
+			i = i + 1
+		end do
+
+		close(UNIT=22)
+
+		end do
+		end do
+		end do
+		end do
+
+		DEALLOCATE(Rdf)
+	end subroutine fill_vibrational_levels
+
 
 end module qme_nakajima_zwanzig
 
