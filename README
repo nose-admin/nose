@@ -1,15 +1,9 @@
 NOSE README
 
-Last change: 05-19-2006
+Last change: 10-01-2013
 
-Compilation notes
------------------
-
-To compile this program you need a fortran compiler (preferentially gfortran that is a part of gcc package).
-Port on other compilers will soon follow. To run scripts Tcl is required.
-
-See project web site at 
+The github repository is only convenient place to collaborate on NOSE for now. See project web site at 
 
 http://sourceforge.net/projects/nose-project/
 
-for more information.
+for the official version and more information. Now, you will probably find newer version of NOSE here, but remember it is not an official release and might quite well be unstable.
