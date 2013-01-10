@@ -15,8 +15,196 @@ contains
         character(len=256)::  cbuff
         integer, dimension(2) :: sz
         integer(i4b) :: i
+        real, dimension(:,:), allocatable :: rbuff
+        integer, dimension(:,:), allocatable :: ibuff
+        integer(i4b) :: rsize1, rsize2
+        integer(i4b) :: isize1, isize2
+        rsize1 = 100
+        rsize2 = 100
+        allocate(rbuff(rsize1,rsize2))
+        isize1 = 100
+        isize2 = 100
+        allocate(ibuff(isize1,isize2))
 
         err = 0
+
+        !
+        ! excSource
+        !
+        if (nis_has_next()) then
+            call nis_next(err)
+            call print_error_message(err,"input_qme")
+            sz = nis_get_size()
+            ibuff(1:4,1:1) = nis_get_integer(sz)
+            Npos = ibuff(1:4,1)
+        else
+            call print_error_message(-1,"Missing record at NIS at position input_qme (excPosition)")
+        end if
+        wstr=adjustl("excSource        ")
+        write(cbuff,'(a32,4i3)') wstr, Npos
+        call print_log_message(trim(cbuff),5)
+		
+        !
+        ! molecule
+        !
+        if (nis_has_next()) then
+            call nis_next(err)
+            call print_error_message(err,"input_qme")
+            sz = nis_get_size()
+            write(cbuff,'(i3)') sz(1)
+            write(molSystem,'('//trim(cbuff)//'a)') nis_get_string(nis_get_size())
+        else
+            call print_error_message(-1,"Missing record at NIS at position input_qme (molecule)")
+        end if
+        wstr=adjustl("molecule         ")
+        write(cbuff,'(a32,a)') wstr, trim(molSystem)
+        call print_log_message(trim(cbuff),5)
+		
+        !
+        ! pathway    
+        !
+        if (nis_has_next()) then
+            call nis_next(err)
+            call print_error_message(err,"input_qme")
+            sz = nis_get_size()
+            write(cbuff,'(i3)') sz(1)
+            write(pathway,'('//trim(cbuff)//'a)') nis_get_string(nis_get_size())
+        else
+            call print_error_message(-1,"Missing record at NIS at position input_qme (pathway)")
+        end if
+        wstr=adjustl("pathway          ")
+        write(cbuff,'(a32,a)') wstr, trim(pathway)
+        call print_log_message(trim(cbuff),5)
+		
+        !
+        ! number of runs (averaging over energy disorder)
+        !
+        if (nis_has_next()) then
+            call nis_next(err)
+            call print_error_message(err,"input_qme")
+            sz = nis_get_size()
+            ibuff(1:2,1:1) = nis_get_integer(sz)
+            Nruns   = ibuff(1,1)
+            dgapini = ibuff(2,1)
+        else
+            call print_error_message(-1,"Missing record at NIS at position input_qme (runs)")
+        end if
+        wstr=adjustl("runs, dgapini    ")
+        write(cbuff,'(a32,2i5)') wstr, Nruns, dgapini
+        call print_log_message(trim(cbuff),5)
+		
+        !
+        ! spec_fq (frequency boundary for the 2D spectrum)
+        !
+        if (nis_has_next()) then
+            call nis_next(err)
+            call print_error_message(err,"input_qme")
+            sz = nis_get_size()
+            ibuff(1:3,1:1) = nis_get_integer(sz)
+            spec_fq = ibuff(1:3,1)
+        else
+            call print_error_message(-1,"Missing record at NIS at position input_qme (spec_wini-dw-wst)")
+        end if
+        wstr=adjustl("spec_wini-dw-wst ")
+        write(cbuff,'(a32,3i5)') wstr, spec_fq
+        call print_log_message(trim(cbuff),5)
+ 		
+        !
+        ! localBasis
+        !
+        if (nis_has_next()) then
+            call nis_next(err)
+            call print_error_message(err,"input_qme")
+            sz = nis_get_size()
+            write(cbuff,'(i3)') sz(1)
+            write(locBasis,'('//trim(cbuff)//'a)') nis_get_string(nis_get_size())
+        else
+            call print_error_message(-1,"Missing record at NIS at position input_qme (localBasis)")
+        end if
+        wstr=adjustl("localBasis       ")
+        write(cbuff,'(a32,a)') wstr, trim(locBasis)
+        call print_log_message(trim(cbuff),5)
+		
+        !
+        ! relaxation
+        !
+        if (nis_has_next()) then
+            call nis_next(err)
+            call print_error_message(err,"input_qme")
+            sz = nis_get_size()
+            write(cbuff,'(i3)') sz(1)
+            write(doRelax,'('//trim(cbuff)//'a)') nis_get_string(nis_get_size())
+        else
+            call print_error_message(-1,"Missing record at NIS at position input_qme (relaxation)")
+        end if
+        wstr=adjustl("relaxation       ")
+        write(cbuff,'(a32,a)') wstr, trim(doRelax)
+        call print_log_message(trim(cbuff),5)
+		
+        !
+        ! secular approximation
+        !
+        if (nis_has_next()) then
+            call nis_next(err)
+            call print_error_message(err,"input_qme")
+            sz = nis_get_size()
+            write(cbuff,'(i3)') sz(1)
+            write(doSecAp,'('//trim(cbuff)//'a)') nis_get_string(nis_get_size())
+        else
+            call print_error_message(-1,"Missing record at NIS at position input_qme (secular)")
+        end if
+        wstr=adjustl("secular ap.      ")
+        write(cbuff,'(a32,a)') wstr, trim(doSecAp)
+        call print_log_message(trim(cbuff),5)
+		
+        !
+        ! pure dephasing calculation
+        !
+        if (nis_has_next()) then
+            call nis_next(err)
+            call print_error_message(err,"input_qme")
+            sz = nis_get_size()
+            write(cbuff,'(i3)') sz(1)
+            write(pureDephasing,'('//trim(cbuff)//'a)') nis_get_string(nis_get_size())
+        else
+            call print_error_message(-1,"Missing record at NIS at position input_qme (dephasing)")
+        end if
+        wstr=adjustl("pure dephasing   ")
+        write(cbuff,'(a32,a)') wstr, trim(pureDephasing)
+        call print_log_message(trim(cbuff),5)
+		
+        !
+        ! feeding rate
+        !
+        if (nis_has_next()) then
+            call nis_next(err)
+            call print_error_message(err,"input_qme")
+            sz = nis_get_size()
+            rbuff(1:1,1:1) = nis_get_real(sz)
+            Kfin = rbuff(1,1)
+        else
+            call print_error_message(-1,"Missing record at NIS at position input_qme (feeding)")
+        end if
+        wstr=adjustl("feeding          ")
+        write(cbuff,'(a32,f9.5)') wstr, Kfin
+        call print_log_message(trim(cbuff),5)
+		
+        !
+        ! draining rate
+        !
+        if (nis_has_next()) then
+            call nis_next(err)
+            call print_error_message(err,"input_qme")
+            sz = nis_get_size()
+            rbuff(1:1,1:1) = nis_get_real(sz)
+            Kdin = rbuff(1,1)
+        else
+            call print_error_message(-1,"Missing record at NIS at position input_qme (draining)")
+        end if
+        wstr=adjustl("draining         ")
+        write(cbuff,'(a32,f9.5)') wstr, Kdin
+        call print_log_message(trim(cbuff),5)
+		
 
         !
         ! use twoexc.
@@ -196,6 +384,14 @@ contains
             use_module_nakajima_zwanzig = .true.
             submethod1 = 's'
             submethod2 = '#'
+
+        else if (index(trim(method), "carotenoid-special") == 1) then
+
+            use_twoexcitons = .true.
+            read_external_evops = .false.
+            use_module_nakajima_zwanzig = .true.
+            submethod1 = '-'
+            submethod2 = '-'
 
         else if (trim(method) == "PT2-RC") then
 

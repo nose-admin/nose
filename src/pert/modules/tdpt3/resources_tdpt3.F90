@@ -9,7 +9,7 @@ module resources_tdpt3
     use resources
     implicit none
 
-    complex(dpc), dimension(:,:), pointer     :: Ueg ! coherence evolution operator U_{eg}(t)
+    complex(dpc), dimension(:,:), pointer     :: Ueg => NULL() ! coherence evolution operator U_{eg}(t)
 
 
     type e_ops_storage
@@ -19,10 +19,10 @@ module resources_tdpt3
         type(e_ops_storage), pointer          :: next
     end type
 
-    type(e_ops_storage), pointer              :: storage
-    type(e_ops_storage), pointer              :: current_Ueg
+    type(e_ops_storage), pointer              :: storage => NULL()
+    type(e_ops_storage), pointer              :: current_Ueg => NULL()
 
-	complex(dpc), dimension(:,:,:), pointer :: Ufe      ! coherence evolution operator U_{fe}(t)
+	complex(dpc), dimension(:,:,:), pointer :: Ufe => NULL()      ! coherence evolution operator U_{fe}(t)
 
  !PGF95   private                                   :: e_ops_storage
  !PGF95   private                                   :: storage

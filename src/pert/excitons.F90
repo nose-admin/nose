@@ -34,18 +34,18 @@ contains
 
         real(dp), dimension(:,:), allocatable :: HH, He
         real(dp), dimension(:,:), allocatable :: HH2, He2
-        real(dp), dimension(:,:), pointer      :: SS, S1
-        real(dp), dimension(:,:), pointer      :: SS2, S12
+        real(dp), dimension(:,:), pointer      :: SS => NULL(), S1 => NULL()
+        real(dp), dimension(:,:), pointer      :: SS2 => NULL(), S12 => NULL()
 
-        integer, dimension(:,:), pointer       :: itwo
-        integer, dimension(:), pointer         :: ione1, ione2
+        integer, dimension(:,:), pointer       :: itwo => NULL()
+        integer, dimension(:), pointer         :: ione1 => NULL(), ione2 => NULL()
 
-        real(dp), dimension(:), pointer        :: e, e2
-        real(dp), dimension(:), pointer        :: dx,dy,dz,dd
-        real(dp), dimension(:,:), pointer      :: dx2,dy2,dz2,dd2
+        real(dp), dimension(:), pointer        :: e => NULL(), e2 => NULL(), eg => NULL()
+        real(dp), dimension(:,:), pointer      :: dx => NULL(),dy => NULL(),dz => NULL(),dd => NULL()
+        real(dp), dimension(:,:), pointer      :: dx2 => NULL(),dy2 => NULL(),dz2 => NULL(),dd2 => NULL()
         real(dp), dimension(3)                  :: vp
         real(dp), dimension(:), allocatable    :: flf
-        real(dp), dimension(:), pointer        :: fl_fac
+        real(dp), dimension(:), pointer        :: fl_fac => NULL()
         real(dp) :: sum
 
 
@@ -212,6 +212,7 @@ contains
             ALLOCATE(SS,(N1,N1))
             ALLOCATE(S1,(N1,N1))
             ALLOCATE(e,(N1))
+            ALLOCATE(eg,(1))
             if (use_twoexcitons) then
                 ALLOCATE(SS2,(N2,N2))
                 ALLOCATE(S12,(N2,N2))
@@ -311,6 +312,7 @@ contains
             ! save eigenenergies
             !
             current_e_block%en => e
+            current_e_block%eng => eg
 !            do i = 1, N1
 !                current_s_block%en(i) = HH(i,i)
 !            end do
@@ -334,15 +336,15 @@ contains
             ! calculate and save dipole moments
             !
             !call allocate_pointer(dx,N1)
-            ALLOCATE(dx,(N1))
+            ALLOCATE(dx,(N1,1))
  !           dx = matmul(S1,current_s_block%dx)
             current_e_block%dx => dx
             !call allocate_pointer(dy,N1)
-            ALLOCATE(dy,(N1))
+            ALLOCATE(dy,(N1,1))
  !           dy = matmul(S1,current_s_block%dy)
             current_e_block%dy => dy
             !call allocate_pointer(dz,N1)
-            ALLOCATE(dz,(N1))
+            ALLOCATE(dz,(N1,1))
  !           dz = matmul(S1,current_s_block%dz)
             current_e_block%dz => dz
 
@@ -390,7 +392,7 @@ contains
             ! calculate save dipole moment lengths
             !
             !call allocate_pointer(dd,N1)
-            ALLOCATE(dd,(N1))
+            ALLOCATE(dd,(N1,1))
             ! find spatial average
 !            do i = 1, N1
 !                dd(i) = sqrt(current_e_block%dx(i)**2 + &
@@ -563,15 +565,15 @@ contains
         real(dp), dimension(:,:), allocatable      :: SS, S1
         real(dp), dimension(:,:), allocatable      :: SS2, S12
 
-        integer, dimension(:,:), pointer       :: itwo
-        integer, dimension(:), pointer         :: ione1, ione2
+        integer, dimension(:,:), pointer       :: itwo => NULL()
+        integer, dimension(:), pointer         :: ione1 => NULL(), ione2 => NULL()
 
-        real(dp), dimension(:), pointer        :: e, e2
-        real(dp), dimension(:), pointer        :: dx,dy,dz,dd
-        real(dp), dimension(:,:), pointer      :: dx2,dy2,dz2,dd2
+        real(dp), dimension(:), pointer        :: e => NULL(), e2 => NULL()
+        real(dp), dimension(:,:), pointer      :: dx => NULL(),dy => NULL(),dz => NULL(),dd => NULL()
+        real(dp), dimension(:,:), pointer      :: dx2 => NULL(),dy2 => NULL(),dz2 => NULL(),dd2 => NULL()
         real(dp), dimension(3)                  :: vp
         real(dp), dimension(:), allocatable    :: flf
-        real(dp), dimension(:), pointer        :: fl_fac
+        real(dp), dimension(:), pointer        :: fl_fac => NULL()
         real(dp) :: sum, jcp
 
 
@@ -860,6 +862,7 @@ contains
             ! save eigenenergies
             !
             current_e_block%en = e
+            current_e_block%eng = 0.0_dp
             do i = 1, N1
                 current_s_block%en(i) = HH(i,i)
             end do
@@ -885,15 +888,15 @@ contains
             ! calculate and save dipole moments
             !
             !call allocate_pointer(dx,N1)
-            ALLOCATE(dx,(N1))
+            ALLOCATE(dx,(N1,1))
             dx = matmul(S1,current_s_block%dx)
             current_e_block%dx = dx
             !call allocate_pointer(dy,N1)
-            ALLOCATE(dy,(N1))
+            ALLOCATE(dy,(N1,1))
             dy = matmul(S1,current_s_block%dy)
             current_e_block%dy = dy
             !call allocate_pointer(dz,N1)
-            ALLOCATE(dz,(N1))
+            ALLOCATE(dz,(N1,1))
             dz = matmul(S1,current_s_block%dz)
             current_e_block%dz = dz
 
@@ -908,13 +911,13 @@ contains
                     l = ione2(i)
                     do j = 1, N1
                         if (j == k) then
-                            dx2(i,j) = current_s_block%dx(l)
-                            dy2(i,j) = current_s_block%dy(l)
-                            dz2(i,j) = current_s_block%dz(l)
+                            dx2(i,j) = current_s_block%dx(l,1)
+                            dy2(i,j) = current_s_block%dy(l,1)
+                            dz2(i,j) = current_s_block%dz(l,1)
                         else if (j == l) then
-                            dx2(i,j) = current_s_block%dx(k)
-                            dy2(i,j) = current_s_block%dy(k)
-                            dz2(i,j) = current_s_block%dz(k)
+                            dx2(i,j) = current_s_block%dx(k,1)
+                            dy2(i,j) = current_s_block%dy(k,1)
+                            dz2(i,j) = current_s_block%dz(k,1)
                         else
                             dx2(i,j) = 0.0_dp
                             dy2(i,j) = 0.0_dp
@@ -940,11 +943,11 @@ contains
             ! calculate save dipole moment lengths
             !
             !call allocate_pointer(dd,N1)
-            ALLOCATE(dd,(N1))
+            ALLOCATE(dd,(N1,1))
             ! find spatial average
             do i = 1, N1
-                dd(i) = sqrt(current_e_block%dx(i)**2 + &
-                current_e_block%dy(i)**2 + current_e_block%dz(i)**2)
+                dd(i,1) = sqrt(current_e_block%dx(i,1)**2 + &
+                current_e_block%dy(i,1)**2 + current_e_block%dz(i,1)**2)
                ! print *, current_e_block%en(i), dd(i)
             end do
 
@@ -974,7 +977,7 @@ contains
 
                        write(11,'(f18.6,e18.6)') &
                           (current_e_block%en(i))*Energy_internal_to_cm, &
-                          current_e_block%dd(i)**2 !1.76*(current_e_block%dd(i)**2)/(current_e_block%dd(1)**2)
+                          current_e_block%dd(i,1)**2 !1.76*(current_e_block%dd(i)**2)/(current_e_block%dd(1)**2)
 
                 end do
                 write(11,'(a)') "# "
@@ -1013,9 +1016,9 @@ contains
             do i = 1, N1
                 do n = 1, N1
                     do m = n+1,N1
-                        vp(1) = dy(m)*dz(n) - dz(m)*dy(n)
-                        vp(2) = dz(m)*dx(n) - dx(m)*dz(n)
-                        vp(3) = dx(m)*dy(n) - dy(m)*dx(n)
+                        vp(1) = dy(m,1)*dz(n,1) - dz(m,1)*dy(n,1)
+                        vp(2) = dz(m,1)*dx(n,1) - dx(m,1)*dz(n,1)
+                        vp(3) = dx(m,1)*dy(n,1) - dy(m,1)*dx(n,1)
                         rm(i) = rm(i) + S1(i,m)*S1(i,n)*dot_product( &
                          current_s_block%rr(m,:)-current_s_block%rr(n,:),vp)
                     end do

@@ -1891,7 +1891,7 @@ module module_montecarlo
 		integer(i4b) :: i,j,k,b, mi,ni
 		integer :: kk, kb
 		! this will be a local pointer to the global transition dipole moments
-		real(dp), dimension(:), pointer :: dd, dx,dy,dz
+		real(dp), dimension(:,:), pointer :: dd, dx,dy,dz
 		! orientation averaging factors
 		real(dp), dimension(:,:), allocatable :: as_orfact
 		real(dp) :: vdni, vdmi
@@ -1935,13 +1935,13 @@ module module_montecarlo
 
 			do ni = 1,N1
 				do mi = 1,N1
-					vdmi = sqrt(dx(mi)*dx(mi) + dy(mi)*dy(mi) + dz(mi)*dz(mi))
-					vdni = sqrt(dx(ni)*dx(ni) + dy(ni)*dy(ni) + dz(ni)*dz(ni))
+					vdmi = sqrt(dx(mi,1)*dx(mi,1) + dy(mi,1)*dy(mi,1) + dz(mi,1)*dz(mi,1))
+					vdni = sqrt(dx(ni,1)*dx(ni,1) + dy(ni,1)*dy(ni,1) + dz(ni,1)*dz(ni,1))
 					if ((vdmi==0.0_dp).or.(vdni==0.0_dp)) then
 					  as_orfact(ni,mi) = 0.0_dp
 					else
 					  as_orfact(ni,mi) = (1.0_dp/3.0_dp)* &
-						(dx(ni)*dx(mi) + dy(ni)*dy(mi) + dz(ni)*dz(mi))/ &
+						(dx(ni,1)*dx(mi,1) + dy(ni,1)*dy(mi,1) + dz(ni,1)*dz(mi,1))/ &
 						(vdni*vdmi)
 					end if
 				end do
@@ -1959,7 +1959,7 @@ module module_montecarlo
 				! loop over excited states
 				do k = 1, N1
 					do j = 1, N1
-						MC_polar_1(i) = MC_polar_1(i) + (dd(k)*dd(j))*as_orfact(k,j)*evops(kb,kb)%Ueg(k,1,j,1,i) !gcohs%C(i,k+kk)
+						MC_polar_1(i) = MC_polar_1(i) + (dd(k,1)*dd(j,1))*as_orfact(k,j)*evops(kb,kb)%Ueg(k,1,j,1,i) !gcohs%C(i,k+kk)
 
 						! 4-mer test --- --- ---
 						!write(*,*) '---> +++=', (dd(k)*dd(j))*as_orfact(k,j)*evops(kb,kb)%Ueg(k,1,j,1,i)
